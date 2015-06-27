@@ -1,0 +1,22 @@
+{
+  "name": "viewdb_persistence_store_remote",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/surikaterna/viewdb_persistence_store_remote.git"
+  },
+  "author": "Andreas Karlsson",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/surikaterna/viewdb_persistence_store_remote/issues"
+  },
+  "homepage": "https://github.com/surikaterna/viewdb_persistence_store_remote#readme",
+  "peerDependencies": {
+    "viewdb": "^0.1.0"
+  }
+}
