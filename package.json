@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha test --recursive",
+    "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --recursive test -u exports -R spec",
+    "coverage-start": "istanbul cover node_modules/mocha/bin/_mocha test --recursive -- -u exports -R spec && start coverage/lcov-report/index.html",
+    "jshint": "jshint ./lib",
+    "jscs": "jscs -p google ./lib"
   },
   "repository": {
     "type": "git",
@@ -18,5 +22,16 @@
   "homepage": "https://github.com/surikaterna/viewdb_persistence_store_remote#readme",
   "peerDependencies": {
     "viewdb": "^0.1.0"
+  },
+  "devDependencies": {
+    "istanbul": "^0.3.2",
+    "jshint": "^2.5.10",
+    "mocha": "^2.0.1",
+    "should": "^4.1.0"
+  },
+  "dependencies": {
+    "bluebird": "^2.9.30",
+    "kuery": "^0.1.0",
+    "lodash": "^3.9.3"
   }
 }
