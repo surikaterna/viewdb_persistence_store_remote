@@ -42,6 +42,6 @@ describe('Reconcile', function() {
 		var start = new Date().getTime();
 		var result = reconcile(local, remote);
 		var end = new Date().getTime();
-		(end-start).should.be.below(50);
+		(end-start).should.be.below(500);
 	})		
 });

@@ -45,15 +45,13 @@ describe('Observe', function() {
 		var called = 0;
 		var handle = cursor.observe({
 			added:function(x) {
-				console.log("added");
 				if(++called===2) {
 					done();
 				}
 			},
 			changed:function(x) {
-				console.log("changed");
 				if(++called===2) {
-				handle.stop();
+					handle.stop();
 					done();
 				}
 			}
