@@ -27,8 +27,7 @@
     "istanbul": "^0.3.2",
     "jshint": "^2.5.10",
     "mocha": "^2.0.1",
-    "should": "^4.1.0",
-    "viewdb": "^0.1.5"
+    "should": "^4.1.0"
   },
   "dependencies": {
     "bluebird": "^2.9.30",
