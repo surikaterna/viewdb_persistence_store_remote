@@ -1,6 +1,6 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "",
   "main": "index.js",
   "scripts": {
