@@ -1,6 +1,6 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/surikaterna/viewdb_persistence_store_remote#readme",
   "peerDependencies": {
-    "viewdb": "^0.1.0"
+    "viewdb": "^0.1.10"
   },
   "devDependencies": {
     "istanbul": "^0.3.2",
