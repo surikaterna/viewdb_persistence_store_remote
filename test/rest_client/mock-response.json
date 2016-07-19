@@ -1,0 +1,14 @@
+[
+  {
+    "city": "city",
+    "country": "SE",
+    "created": 1468845733927,
+    "generatedId": 1,
+    "id": "1",
+    "modified": 1468845735670,
+    "name": "firstName",
+    "name2": "Lastname",
+    "street": "street",
+    "version": 1
+  }
+]
