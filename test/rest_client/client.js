@@ -88,11 +88,11 @@ describe('RestClient', function () {
 
     restClient.subscribe({ observe: { name: 'a' }, collection: 'party', events: {} }, function (err, res) {
       if (hitCount === 1) {
-        should.equal(res.result.changes[0].a.e.name, 'firstName');
-        should.equal(res.result.changes.length, 1);
+        should.equal(res.changes[0].a.e.name, 'firstName');
+        should.equal(res.changes.length, 1);
       }
       if (hitCount === 2) {
-        should.equal(res.result.changes.length, 0);
+        should.equal(res.changes.length, 0);
         done();
       }
     });
