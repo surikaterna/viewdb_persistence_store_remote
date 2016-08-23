@@ -1,10 +1,11 @@
 var nock = require('nock');
 var Client = require('../..').RestClient;
+var Store = require('../..').Client;
 var should = require('should');
 var mockResponse = require('./mock-response.json');
 
 var testOptions = {
-  pollInterval: 10
+  pollInterval: 15
 };
 
 describe('RestClient', function () {
@@ -18,6 +19,18 @@ describe('RestClient', function () {
       should.deepEqual(result, mockResponse);
       done();
     });
+  });
+
+  it('#skiplimit url should be correct', function (done) {
+    var restClient = new Client('http://www.example.com/', {}, testOptions);
+    nock('http://www.example.com')
+      .get('/party?q=%7B%22name%22%3A%22Firstname%22%7D&skip=50&limit=77')
+      .reply(function () {
+        done();
+        return [201, mockResponse, {}];
+      });
+    var store = new Store(restClient);
+    store.collection('party').find({ name: 'Firstname' }).skip(50).limit(77).toArray(function () {});
   });
 
   it('#observe should work', function (done) {
@@ -35,11 +48,11 @@ describe('RestClient', function () {
     // {observe:this._query, collection:this._collection._name, events:events}
     restClient.subscribe({ observe: { name: 'a' }, collection: 'shipment', events: {}, skip: 1, limit: 100 }, function () {});
 
-    // wait 55ms to see if 5 calls were made (initial request at 0ms)
+    // wait 70ms to see if >=5 calls were made (initial request at 0ms)
     setTimeout(function () {
       should.equal(true, (hitCount >= 5));
       done();
-    }, 60);
+    }, 70);
   });
 
   it('#observe should stop when calling stop', function (done) {
@@ -92,7 +105,7 @@ describe('RestClient', function () {
         should.equal(res.changes.length, 1);
       }
       if (hitCount === 2) {
-        should.equal(res.changes.length, 0);
+        should.equal(res.changes[0].r.e.name, 'firstName');
         done();
       }
     });

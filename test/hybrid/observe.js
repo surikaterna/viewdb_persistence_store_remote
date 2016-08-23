@@ -60,7 +60,7 @@ describe('Observe', function() {
 		remote.collection('dollhouse').insert({_id:'echo2', remote:true});
 
 	});	
-	xit('#observe with query and update', function(done) {
+	it('#observe with query and update', function(done) {
 		var store = new ViewDb();
 		store.open().then(function() {
 				var cursor = store.collection('dollhouse').find({_id:'echo'});
