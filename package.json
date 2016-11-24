@@ -33,12 +33,12 @@
   },
   "dependencies": {
     "bluebird": "^2.9.30",
-    "request-promise": "^0.4.3",
     "debug": "^2.2.0",
-    "kuery": "^0.2.0",
-    "lodash": "^4.8.2",
     "eslint": "^2.5.3",
     "eslint-config-surikat": "^1.1.0",
-    "node-uuid": "^1.4.3"
+    "kuery": "^0.2.0",
+    "lodash": "^4.8.2",
+    "request-promise": "^0.4.3",
+    "uuid": "^3.0.0"
   }
 }
