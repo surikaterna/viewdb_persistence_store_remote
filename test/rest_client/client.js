@@ -10,6 +10,9 @@ var testOptions = {
 };
 
 describe('RestClient', function () {
+  afterEach(function() {
+    nock.cleanAll();
+  });
   it('#request should work', function (done) {
     var restClient = new Client('http://www.example.com/', {}, testOptions);
     nock('http://www.example.com')
@@ -96,12 +99,13 @@ describe('RestClient', function () {
         should.equal(res.changes.length, 1);
       }
       if (hits === 2) {
+        handle.stop();
         should.equal(res.changes[0].r.e.name, 'firstName');
         done();
       }
     };
 
-    restClient.subscribe({ observe: { name: 'a' }, collection: 'party', events: {} }, function (err, res) {
+    const handle = restClient.subscribe({ observe: { name: 'a' }, collection: 'party', events: {} }, function (err, res) {
       verify(res);
     });
   });
