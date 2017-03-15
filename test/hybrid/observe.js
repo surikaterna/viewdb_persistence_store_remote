@@ -80,5 +80,18 @@ describe('Observe', function() {
 				store.collection('dollhouse').save({_id:'echo', age:100});
 			});			
 		});
-	});	
+  });
+  it('#observe with both empty local and remote result', function(done) {
+    var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
+    var handle = cursor.observe({
+      init:function(r) {
+        r.length.should.equal(0);
+        done();
+      },
+      added:function(x) {
+      	console.log(x);
+        done(new Error('uh oh'));
+      }
+    });
+  });
 })
