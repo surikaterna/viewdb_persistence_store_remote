@@ -3,7 +3,6 @@ var should = require('should');
 var ViewDb = require('viewdb');
 var HybridStore = require('../..').Hybrid;
 
-
 describe('Observe', function() {
 	var local = null;
 	var remote = null;
@@ -12,7 +11,7 @@ describe('Observe', function() {
 	beforeEach(function(done){
 		local = new ViewDb();
 		remote = new ViewDb();
-		hybrid = new ViewDb(new HybridStore(local, remote, {throttleObserveRefresh:20}));
+		hybrid = new ViewDb(new HybridStore(local, remote, {throttleObserveRefresh:0}));
 		hybrid.open().then(function() {done()});
 	});
 
@@ -60,7 +59,7 @@ describe('Observe', function() {
 		remote.collection('dollhouse').insert({_id:'echo2', remote:true});
 
 	});	
-	xit('#observe with query and update', function(done) {
+	it('#observe with query and update', function(done) {
 		var store = new ViewDb();
 		store.open().then(function() {
 				var cursor = store.collection('dollhouse').find({_id:'echo'});
@@ -80,5 +79,19 @@ describe('Observe', function() {
 				store.collection('dollhouse').save({_id:'echo', age:100});
 			});			
 		});
-	});	
+  });
+  it('#observe with both empty local and remote result', function(done) {
+    var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
+    var handle = cursor.observe({
+      init:function(r) {
+        r.length.should.equal(0);
+        handle.stop();
+        done();
+      },
+      added:function(x) {
+      	console.log(x);
+        done(new Error('uh oh'));
+      }
+    });
+  });
 })

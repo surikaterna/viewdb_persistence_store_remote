@@ -1,10 +1,11 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "2.0.5",
+  "version": "2.2.2",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "mocha test --recursive",
+    "test.watch": "mocha test --watch --recursive",
     "coverage": "istanbul cover node_modules/mocha/bin/_mocha -- --recursive test -u exports -R spec",
     "coverage-start": "istanbul cover node_modules/mocha/bin/_mocha test --recursive -- -u exports -R spec && start coverage/lcov-report/index.html",
     "jshint": "jshint ./lib",
@@ -33,12 +34,13 @@
   },
   "dependencies": {
     "bluebird": "^2.9.30",
-    "request-promise": "^0.4.3",
     "debug": "^2.2.0",
-    "kuery": "^0.2.0",
-    "lodash": "^4.8.2",
     "eslint": "^2.5.3",
     "eslint-config-surikat": "^1.1.0",
-    "node-uuid": "^1.4.3"
+    "kuery": "^0.3.2",
+    "lodash": "^4.8.2",
+    "node-uuid": "^1.4.3",
+    "request-promise": "^0.4.3",
+    "slf": "^0.1.3"
   }
 }
