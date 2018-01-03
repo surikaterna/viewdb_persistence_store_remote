@@ -1,6 +1,6 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "2.2.5",
+  "version": "2.2.6",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -37,7 +37,7 @@
     "debug": "^2.2.0",
     "eslint": "^2.5.3",
     "eslint-config-surikat": "^1.1.0",
-    "kuery": "^0.3.2",
+    "kuery": "^0.4.0",
     "lodash": "^4.8.2",
     "node-uuid": "^1.4.3",
     "request-promise": "^0.4.3",
