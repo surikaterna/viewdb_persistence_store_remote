@@ -1,5 +1,4 @@
 var should = require('should');
-
 var ViewDb = require('viewdb');
 var HybridStore = require('../..').Hybrid;
 
