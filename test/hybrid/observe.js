@@ -1,5 +1,4 @@
 var should = require('should');
-var _ = require('lodash');
 var ViewDb = require('viewdb');
 var HybridStore = require('../..').Hybrid;
 
@@ -79,46 +78,6 @@ describe('Observe', function() {
 				store.collection('dollhouse').save({_id:'echo', age:100});
 			});			
 		});
-  });
-  it('#observe with update query', function(done) {
-  	var id = 1;
-    remote.collection('dollhouse').insert({_id:id});
-    var cursor = hybrid.collection('dollhouse').find({_id:id});
-
-    var handle = cursor.observe({
-      added:function(x) {
-        x._id.should.equal(id);
-        if (x._id === 3) {
-					handle.stop();
-					done();
-				} else {
-					cursor.updateQuery({_id:++id});
-					remote.collection('dollhouse').insert({_id:id});
-				}
-      }
-    });
-    local.collection('dollhouse').insert({_id:'echo2'});
-  });
-  it('#observe with update $in query', function(done) {
-    remote.collection('dollhouse').insert({_id: 1});
-    var realDone = _.after(2, done);
-    var cursor = hybrid.collection('dollhouse').find({_id: { $in: [1, 2]}});
-
-    var handle = cursor.observe({
-      added:function(x) {
-        if (x._id === 3) {
-					handle.stop();
-					realDone();
-				} else {
-          cursor.updateQuery({ _id: { $in: [2, 3] } });
-					remote.collection('dollhouse').insert({_id:3});
-				}
-      },
-			removed:function (x) {
-				x._id.should.equal(1);
-				realDone();
-      }
-    });
   });
   it('#observe with both empty local and remote result', function(done) {
     var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
