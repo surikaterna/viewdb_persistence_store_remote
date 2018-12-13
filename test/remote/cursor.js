@@ -5,8 +5,8 @@ var Store = require('../../lib/client/store');
 var Client = require('../../lib/client/rr_client');
 var SocketMock = require('socket.io-mock');
 
-describe('Remote server/client', function() {
-	var clientVdb, remote, socketServer, socketClient;
+describe('Remote server/client', function () {
+  var clientVdb, remote, socketServer, socketClient;
 
   beforeEach(function (done) {
     socketServer = new SocketMock();
@@ -19,7 +19,7 @@ describe('Remote server/client', function() {
     done();
   });
 
-	it('#socketMock should work', function(done) {
+  it('#socketMock should work', function (done) {
     socketClient.on('ping', function (message) {
       message.should.equal('Hello');
       socketClient.emit('pong', 'heya');
@@ -27,44 +27,44 @@ describe('Remote server/client', function() {
 
     socketServer.on('pong', function (message) {
       message.should.equal('heya');
-    	done();
+      done();
     });
 
     socketServer.emit('ping', 'Hello');
-	});
+  });
 
-	it('#remote query', function(done) {
-    remote.collection('dollhouse').insert({_id:'echo', test: 'success'});
-    clientVdb.collection('dollhouse').find({_id: 'echo'}).toArray(function (err, res) {
+  it('#remote query', function (done) {
+    remote.collection('dollhouse').insert({ _id: 'echo', test: 'success' });
+    clientVdb.collection('dollhouse').find({ _id: 'echo' }).toArray(function (err, res) {
       res[0].test.should.equal('success');
-			done();
-		})
+      done();
+    })
   });
 
-	it('#remote cursor count', function(done) {
-    remote.collection('dollhouse').insert({_id:'echo'});
-    remote.collection('dollhouse').insert({_id:'echo2'});
-    clientVdb.collection('dollhouse').find({_id: 'echo'}).count(function (err, res) {
-    	res.should.equal(1);
-			done();
-		});
+  it('#remote cursor count', function (done) {
+    remote.collection('dollhouse').insert({ _id: 'echo' });
+    remote.collection('dollhouse').insert({ _id: 'echo2' });
+    clientVdb.collection('dollhouse').find({ _id: 'echo' }).count(function (err, res) {
+      res.should.equal(1);
+      done();
+    });
   });
 
-	it('#remote cursor count should ignore skip/limit', function(done) {
-    remote.collection('dollhouse').insert({_id:'echo'});
-    remote.collection('dollhouse').insert({_id:'echo2'});
+  it('#remote cursor count should ignore skip/limit', function (done) {
+    remote.collection('dollhouse').insert({ _id: 'echo' });
+    remote.collection('dollhouse').insert({ _id: 'echo2' });
     clientVdb.collection('dollhouse').find({}).skip(1).limit(1).count(function (err, res) {
-    	res.should.equal(2);
-			done();
-		});
+      res.should.equal(2);
+      done();
+    });
   });
 
-	it('#remote collection count', function(done) {
-    remote.collection('dollhouse').insert({_id:'echo'});
-    remote.collection('dollhouse').insert({_id:'echo2'});
+  it('#remote collection count', function (done) {
+    remote.collection('dollhouse').insert({ _id: 'echo' });
+    remote.collection('dollhouse').insert({ _id: 'echo2' });
     clientVdb.collection('dollhouse').count(function (err, res) {
-    	res.should.equal(2);
-			done();
-		});
+      res.should.equal(2);
+      done();
+    });
   });
 });
