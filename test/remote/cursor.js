@@ -56,7 +56,7 @@ describe('Remote server/client', function () {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
     remote.collection('dollhouse').insert({ _id: 'echo3' });
-    clientVdb.collection('dollhouse').find({}).count(true, { skip: 1  }, function (err, res) {
+    clientVdb.collection('dollhouse').find({}).count({}, { skip: 1  }, function (err, res) {
       res.should.equal(2);
       done();
     });
@@ -65,7 +65,7 @@ describe('Remote server/client', function () {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
     remote.collection('dollhouse').insert({ _id: 'echo3' });
-    clientVdb.collection('dollhouse').find({}).count(true, { limit: 2 }, function (err, res) {
+    clientVdb.collection('dollhouse').find({}).count({}, { limit: 2 }, function (err, res) {
       res.should.equal(2);
       done();
     });
@@ -73,8 +73,8 @@ describe('Remote server/client', function () {
   it('#remote collection count', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
-    clientVdb.collection('dollhouse').count(function (err, res) {
-      res.should.equal(2);
+    clientVdb.collection('dollhouse').count({_id: 'echo'}, function (err, res) {
+      res.should.equal(1);
       done();
     });
   });
