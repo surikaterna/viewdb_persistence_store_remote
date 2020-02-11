@@ -4,13 +4,14 @@ var ViewDbSocketServer = require('../../lib/server/server');
 var Store = require('../../lib/client/store');
 var Client = require('../../lib/client/rr_client');
 var SocketMock = require('socket.io-mock');
+var HybridStore = require('../..').Hybrid;
 
 describe('Remote server/client', function () {
-  var clientVdb, remote, socketServer, socketClient, clientStore;
+  var clientVdb, remote, socketServer, socketClient, clientStore, client;
   beforeEach(function (done) {
     socketServer = new SocketMock();
     socketClient = socketServer.socketClient;
-    var client = new Client(socketClient);
+    client = new Client(socketClient);
     clientStore = new Store(client);
     clientVdb = new ViewDb(clientStore);
     remote = new ViewDb();
@@ -147,9 +148,38 @@ describe('Remote server/client', function () {
         remote.collection('dollhouse').save({ _id: 'echo3', updated: true });
       },
       changed: function (asis, tobe) {
-        tobe.updated.should.equal(true)
+        tobe.updated.should.equal(true);
         done();
       }
+    });
+  });
+  it('#remote reconnected should work with hybrid', function (done) {
+    remote.collection('dollhouse').insert({ _id: 'echo2' });
+    var local = new ViewDb();
+    var hybrid = new ViewDb(new HybridStore(local, clientStore, { throttleObserveRefresh: 0 }));
+    var list = [];
+    var changes = 0;
+    hybrid.open().then(function () {
+      var cursor = hybrid.collection('dollhouse').find({ _id: { $in: ['echo2'] } });
+      cursor.observe({
+        init: function (init) {
+          list = init;
+        },
+        added: function (element, index) {
+          list.splice(index, 1);
+          remote.collection('dollhouse').save({ _id: 'echo2', changed: 1 });
+          clientStore.onClientReconnected();
+        },
+        changed: function (asis, tobe, index) {
+          changes++;
+          remote.collection('dollhouse').save({ _id: 'echo2', changed: 2 });
+          list[index] = tobe;
+          list.length.should.equal(1);
+          if (changes === 2) {
+            done();
+          }
+        }
+      });
     });
   });
 });
