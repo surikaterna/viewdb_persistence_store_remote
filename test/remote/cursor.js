@@ -120,7 +120,7 @@ describe('Remote server/client', function () {
         if (inits === 1) {
           init.length.should.equal(1);
           remote.collection('dollhouse').insert({ _id: 'echo3' });
-          clientStore.onClientReconnected();
+          client.onClientReconnected();
         } else if (inits === 2) {
           init.length.should.equal(2);
           done();
@@ -137,7 +137,7 @@ describe('Remote server/client', function () {
         inits++;
         init.length.should.equal(1);
         if (inits === 1) {
-          clientStore.onClientReconnected();
+          client.onClientReconnected();
           remote.collection('dollhouse').insert({ _id: 'echo3' });
         } else {
           inits.should.equal(2); // max 2 inits - 1 reconnect
@@ -168,7 +168,7 @@ describe('Remote server/client', function () {
         added: function (element, index) {
           list.splice(index, 1);
           remote.collection('dollhouse').save({ _id: 'echo2', changed: 1 });
-          clientStore.onClientReconnected();
+          client.onClientReconnected();
         },
         changed: function (asis, tobe, index) {
           changes++;
