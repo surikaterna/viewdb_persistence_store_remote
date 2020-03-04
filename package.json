@@ -35,7 +35,7 @@
     "viewdb": "^0.5.2"
   },
   "dependencies": {
-    "bluebird": "^2.9.30",
+    "bluebird": "^3.0.0",
     "debug": "^2.2.0",
     "eslint": "^2.5.3",
     "eslint-config-surikat": "^1.1.0",
