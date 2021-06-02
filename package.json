@@ -1,6 +1,6 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "2.2.19",
+  "version": "2.2.20",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -32,7 +32,7 @@
     "nock": "^8.0.0",
     "should": "^4.1.0",
     "socket.io-mock": "^1.2.3",
-    "viewdb": "^0.5.2"
+    "viewdb": "^0.5.9"
   },
   "dependencies": {
     "bluebird": "^2.9.30",
