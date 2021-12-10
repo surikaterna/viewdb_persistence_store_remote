@@ -93,4 +93,24 @@ describe('Observe', function() {
       }
     });
   });
-})
+	it('#should cache query if setting is enabled', function(done) {
+		hybrid = new ViewDb(new HybridStore(local, remote, { throttleObserveRefresh: 0, cacheQueries: true, queryMaxTime: 2 }));
+		hybrid.open().then(function() {
+			var cursor = hybrid.collection('dollhouse').find({});
+			cursor.observe({
+				added: function () {
+					setTimeout(function() {
+							hybrid.collection('dollhouse')._getCachedData({}, 0, 0, undefined, undefined, function (err, cachedDocuments) {
+								cachedDocuments.length.should.equal(1);
+								cachedDocuments[0]._id.should.equal('alfa');
+								cachedDocuments[0].age.should.equal(100);
+								done();
+							});
+					});
+				}
+			});
+
+			remote.collection('dollhouse').insert({ _id: 'alfa', age: 100 });
+		});
+	});
+});
