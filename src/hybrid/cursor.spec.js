@@ -1,6 +1,5 @@
-var Cursor = require('../../lib/hybrid/cursor');
+var Cursor = require('./cursor');
 var LocalCursor = require('viewdb').Cursor;
-var should = require('should');
 
 describe('Cursor', function() {
   it('#toArray should return remote', function(done) {
@@ -12,7 +11,7 @@ describe('Cursor', function() {
     });
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {})
     hcursor.toArray(function(err, result) {
-      result.length.should.equal(2);
+      expect(result).toHaveLength(2);
       done();
     });
   });
@@ -54,8 +53,8 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      result[0].local.should.not.be.true;
-      result[1].local.should.be.true;
+      expect(result[0].local).toBe(false);
+      expect(result[1].local).toBe(true);
       done();
     });
   });
@@ -70,8 +69,8 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      result[0].local.should.not.be.true;
-      result[1].local.should.be.true;
+      expect(result[0].local).toBe(false);
+      expect(result[1].local).toBe(true);
       done();
     });
   });
@@ -85,7 +84,7 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.exist(err);
+      expect(err).toBeDefined();
       done();
     });
   });
@@ -99,7 +98,7 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false, throwRemoteErr:true})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.exist(err);
+      expect(err).toBeDefined();
       done();
     });
   });
@@ -113,8 +112,8 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false, throwRemoteErr:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.not.exist(err);
-      result.length.should.equal(2);
+      expect(err).toBeNull();
+      expect(result).toHaveLength(2);
       done();
     });
   });
@@ -153,10 +152,10 @@ describe('Cursor', function() {
     var hcursor = new Cursor(query, lcursor, rcursor, {}, {localFirst:false, throwRemoteErr:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.not.exist(err);
-      result.length.should.equal(1);
-      result[0].things[0].name.should.equal('banana');
-      result[0].things[0].category.should.equal('fruit');
+      expect(err).toBeNull();
+      expect(result).toHaveLength(1);
+      expect(result[0].things[0].name).toBe('banana');
+      expect(result[0].things[0].category).toBe('fruit');
       done();
     });
   });
@@ -170,8 +169,8 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false, throwRemoteErr:false})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.not.exist(err);
-      result.length.should.equal(2);
+      expect(err).toBeNull();
+      expect(result).toHaveLength(2);
       done();
     });
   });
@@ -185,7 +184,7 @@ describe('Cursor', function() {
     var hcursor = new Cursor({}, lcursor, rcursor, {}, {localFirst:false, throwRemoteErr:true})
     var calls = 0;
     hcursor.toArray(function(err, result) {
-      should.exist(err);
+      expect(err).toBeDefined();
       done();
     });
   });

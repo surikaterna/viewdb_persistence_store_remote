@@ -1,38 +1,37 @@
-var should = require('should');
-var reconcile = require('../../lib/hybrid/reconcile');
+var reconcile = require('./reconcile');
 
 describe('Reconcile', function() {
 	it('#reconcile should return remote docs if only remote', function() {
-		reconcile([], [{_id:1}]).length.should.equal(1);
+		expect(reconcile([], [{_id:1}])).toHaveLength(1);
 	})
 
 	it('#reconcile should return local docs if only local', function() {
-		reconcile([{_id:1}], []).length.should.equal(1);
-	})	
+		expect(reconcile([{_id:1}], [])).toHaveLength(1);
+	})
 	it('#reconcile should return empty if no local or remote docs', function() {
-		reconcile([], []).length.should.equal(0);
-	})	
+		expect(reconcile([], [])).toHaveLength(0);
+	})
 	it('#reconcile should return all docs if local and remote docs do not match', function() {
-		reconcile([{_id:1}, {_id:2}], [{_id:3},{_id:4}]).length.should.equal(4);
-	})	
+		expect(reconcile([{_id:1}, {_id:2}], [{_id:3},{_id:4}])).toHaveLength(4);
+	})
 	it('#reconcile should return some docs if local and remote docs do match', function() {
-		reconcile([{_id:1}, {_id:2}], [{_id:1},{_id:2}]).length.should.equal(2);
-	})	
+		expect(reconcile([{_id:1}, {_id:2}], [{_id:1},{_id:2}])).toHaveLength(2);
+	})
 	it('#reconcile should return remote docs if local and remote docs do match', function() {
 		var result = reconcile([{_id:1}, {_id:2}], [{_id:1, a:1},{_id:2, a:2}]);
-		result[0].should.have.property('a');
-		result[1].should.have.property('a');
-	})	
+		expect(result[0]).toHaveProperty('a');
+		expect(result[1]).toHaveProperty('a');
+	})
 	it('#reconcile should return local docs if local and remote docs do match and local version higher', function() {
 		var result = reconcile([{_id:1, version:2}, {_id:2, version:2}], [{_id:1, a:1, version:1},{_id:2, a:2, version:1}]);
-		result[0].should.not.have.property('a');
-		result[1].should.not.have.property('a');
-	})	
+		expect(result[0]).not.toHaveProperty('a');
+		expect(result[1]).not.toHaveProperty('a');
+	})
 	it('#reconcile should return remote docs if local and remote docs do match and remote version higher', function() {
 		var result = reconcile([{_id:1, version:1}, {_id:2, version:1}], [{_id:1, a:1, version:2},{_id:2, a:2, version:2}]);
-		result[0].should.have.property('a');
-		result[1].should.have.property('a');
-	})	
+		expect(result[0]).toHaveProperty('a');
+		expect(result[1]).toHaveProperty('a');
+	})
 	it('#reconcile should work timely with large arrays', function() {
 		var local = [], remote=[];
 		for(var i=0;i<1000; i++) {
@@ -42,6 +41,6 @@ describe('Reconcile', function() {
 		var start = new Date().getTime();
 		var result = reconcile(local, remote);
 		var end = new Date().getTime();
-		(end-start).should.be.below(500);
-	})		
+		expect(end-start).toBeLessThan(500);
+	})
 });

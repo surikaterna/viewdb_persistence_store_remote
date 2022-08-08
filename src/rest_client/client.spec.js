@@ -1,8 +1,7 @@
 var nock = require('nock');
-var Client = require('../..').RestClient;
-var Store = require('../..').Client;
-var should = require('should');
-var mockResponse = require('./mock-response.json');
+var Client = require('..').RestClient;
+var Store = require('..').Client;
+var mockResponse = require('../rest_client/mock-response.json');
 var _ = require('lodash');
 
 var testOptions = {
@@ -20,7 +19,7 @@ describe('RestClient', function () {
       .reply(200, mockResponse);
 
     restClient.request({ find: { name: 'Firstname' }, collection: 'party' }, function (err, result) {
-      should.deepEqual(result, mockResponse);
+      expect(result).toEqual(mockResponse);
       done();
     });
   });
@@ -74,7 +73,7 @@ describe('RestClient', function () {
     stop = _.after(1, observer.stop)
 
     setTimeout(function () {
-      hitCount.should.equal(1);
+      expect(hitCount).toBe(1);
       done();
     }, 15);
   });
@@ -95,12 +94,12 @@ describe('RestClient', function () {
     var verify = function (res) {
       ++hits;
       if (hits === 1) {
-        should.equal(res.changes[0].a.e.name, 'firstName');
-        should.equal(res.changes.length, 1);
+        expect(res.changes[0].a.e.name).toBe('firstName');
+        expect(res.changes).toHaveLength(1);
       }
       if (hits === 2) {
         handle.stop();
-        should.equal(res.changes[0].r.e.name, 'firstName');
+        expect(res.changes[0].r.e.name).toBe('firstName');
         done();
       }
     };

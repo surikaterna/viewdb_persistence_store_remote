@@ -1,7 +1,6 @@
-var Store = require('../../lib/hybrid/store');
+var Store = require('./store');
 var LocalStore = require('viewdb/lib/inmemory/store');
-var should = require('should');
-var Cursor = require('viewdb/lib').Cursor;
+var Cursor = require('viewdb').Cursor;
 
 describe('Store', function () {
   it('should cache', function (done) {
@@ -15,7 +14,7 @@ describe('Store', function () {
           // Caching of data is not sync action, wait for next tick before fetching data
           setTimeout(function () {
             hcursor.collection('alfa')._getCachedData({}, undefined, undefined, undefined, undefined, function (err, data) {
-              data.length.should.equal(1);
+              expect(data).toHaveLength(1);
               done();
             });
           });
@@ -43,9 +42,9 @@ describe('Store', function () {
                 setTimeout(function () {
                   hcursor.collection('alfa')._getCachedData({ id: 'abc' }, undefined, undefined, undefined, undefined, function (_err, data) {
                     hcursor.collection('alfa')._getCachedData({ id: 'abc' }, undefined, undefined, undefined, { id: 1 }, function (_err2, projectedData) {
-                      data.length.should.equal(1);
-                      projectedData.length.should.equal(1);
-                      projectedData[0]._insertedAt.should.be.below(data[0]._insertedAt);
+                      expect(data).toHaveLength(1);
+                      expect(projectedData).toHaveLength(1);
+                      expect(projectedData[0]._insertedAt).toBeLessThan(data[0]._insertedAt);
                       done();
                     });
                   });
@@ -69,7 +68,7 @@ describe('Store', function () {
         if (res.length > 0) {
           setTimeout(function () {
             hcursor.collection('alfa')._getCachedData({}, undefined, undefined, undefined, undefined, function (err, data) {
-              data.length.should.equal(1);
+              expect(data).toHaveLength(1);
             });
           });
         }
@@ -81,7 +80,7 @@ describe('Store', function () {
         hcursor._collections._cache._documents.resultSet = ['xyz'];
         hcursor.collection('alfa').find({}).toArray(function (err, res) {
           iterations += 1;
-          res.length.should.equal(1);
+          expect(res).toHaveLength(1);
           if (iterations > 1 || res.length === 0) {
             done();
           }

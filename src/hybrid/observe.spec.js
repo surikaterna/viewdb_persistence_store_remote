@@ -1,6 +1,5 @@
-var should = require('should');
 var ViewDb = require('viewdb');
-var HybridStore = require('../..').Hybrid;
+var HybridStore = require('..').Hybrid;
 
 describe('Observe', function() {
 	var local = null;
@@ -18,7 +17,7 @@ describe('Observe', function() {
 		var cursor = hybrid.collection('dollhouse').find({});
 		var handle = cursor.observe({
 			added:function(x) {
-				x._id.should.equal('echo');
+				expect(x._id).toBe('echo');
 				handle.stop();
 				done();
 			}
@@ -30,13 +29,13 @@ describe('Observe', function() {
 		var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
 		var handle = cursor.observe({
 			added:function(x) {
-				x._id.should.equal('echo2');
+				expect(x._id).toBe('echo2');
 				handle.stop();
 				done();
 			}
 		});
 		local.collection('dollhouse').insert({_id:'echo2'});
-	});	
+	});
 	it('#observe called twice with one local and one remote insert', function(done) {
 		remote.collection('dollhouse').insert({_id:'echo'});
 		var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
@@ -57,33 +56,33 @@ describe('Observe', function() {
 		local.collection('dollhouse').insert({_id:'echo2'});
 		remote.collection('dollhouse').insert({_id:'echo2', remote:true});
 
-	});	
+	});
 	it('#observe with query and update', function(done) {
 		var store = new ViewDb();
 		store.open().then(function() {
 				var cursor = store.collection('dollhouse').find({_id:'echo'});
 				var handle = cursor.observe({
 					added:function(x) {
-						x.age.should.equal(10);
-						x._id.should.equal('echo');
+						expect(x.age).toBe(10);
+						expect(x._id).toBe('echo');
 					}, changed:function(o,n) {
-						o.age.should.equal(10);
-						n.age.should.equal(100);
+						expect(o.age).toBe(10);
+						expect(n.age).toBe(100);
 						handle.stop();
 						done();
 					}
 				});
-			
+
 			store.collection('dollhouse').insert({_id:'echo', age:10}, function(){
 				store.collection('dollhouse').save({_id:'echo', age:100});
-			});			
+			});
 		});
   });
   it('#observe with both empty local and remote result', function(done) {
     var cursor = hybrid.collection('dollhouse').find({_id:'echo2'});
     var handle = cursor.observe({
       init:function(r) {
-        r.length.should.equal(0);
+        expect(r).toHaveLength(0);
         handle.stop();
         done();
       },
@@ -101,9 +100,9 @@ describe('Observe', function() {
 				added: function () {
 					setTimeout(function() {
 							hybrid.collection('dollhouse')._getCachedData({}, 0, 0, undefined, undefined, function (err, cachedDocuments) {
-								cachedDocuments.length.should.equal(1);
-								cachedDocuments[0]._id.should.equal('alfa');
-								cachedDocuments[0].age.should.equal(100);
+								expect(cachedDocuments).toHaveLength(1);
+								expect(cachedDocuments[0]._id).toBe('alfa');
+								expect(cachedDocuments[0].age).toBe(100);
 								done();
 							});
 					});

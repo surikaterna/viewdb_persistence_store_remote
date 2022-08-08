@@ -1,9 +1,8 @@
-var should = require('should');
 var _ = require('lodash');
 var ViewDb = require('viewdb');
-var ViewDbRemoteClient = require('../../').Client;
-var SocketClient = require('../../').SocketClient;
-var HybridStore = require('../..').Hybrid;
+var ViewDbRemoteClient = require('..').Client;
+var SocketClient = require('..').SocketClient;
+var HybridStore = require('..').Hybrid;
 
 describe('Observe-Update', function() {
 	var local = null;
@@ -28,7 +27,7 @@ describe('Observe-Update', function() {
 
     var handle = cursor.observe({
       added:function(x) {
-        x._id.should.equal(id);
+        expect(x._id).toBe(id);
         if (x._id === 3) {
 					handle.stop();
 					done();
@@ -56,7 +55,7 @@ describe('Observe-Update', function() {
         }
       },
       removed: function (x) {
-        x._id.should.equal(1);
+        expect(x._id).toBe(1);
         realDone();
       }
     });

@@ -1,11 +1,10 @@
-var should = require('should');
 var ViewDb = require('viewdb');
 var _ = require('lodash');
-var ViewDbSocketServer = require('../../lib/server/server');
-var Store = require('../../lib/client/store');
-var Client = require('../../lib/client/rr_client');
+var ViewDbSocketServer = require('../server/server');
+var Store = require('../client/store');
+var Client = require('../client/rr_client');
 var SocketMock = require('socket.io-mock');
-var HybridStore = require('../..').Hybrid;
+var HybridStore = require('..').Hybrid;
 
 describe('Observe-Update Remote', function () {
   var clientRemote, serverViewdb, socketServer, socketClient, clientStore, client, clientLocal, hybrid;
@@ -46,7 +45,7 @@ describe('Observe-Update Remote', function () {
       },
       added: function (x) {
         realDone(); // 3 calls
-        x._id.should.equal(id);
+        expect(x._id).toBe(id);
         if (x._id === 3) {
           handle.stop();
         } else {
@@ -67,7 +66,7 @@ describe('Observe-Update Remote', function () {
 
     var handle = hybridCursor.observe({
       added: function (x) {
-        x._id.should.equal(id);
+        expect(x._id).toBe(id);
         if (x._id === 3) {
           handle.stop();
           done();
@@ -95,7 +94,7 @@ describe('Observe-Update Remote', function () {
         }
       },
       removed: function (x) {
-        x._id.should.equal(1);
+        expect(x._id).toBe(1);
         realDone();
       }
     });

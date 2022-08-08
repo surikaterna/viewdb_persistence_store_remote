@@ -1,6 +1,5 @@
-var should = require('should');
 var ViewDb = require('viewdb');
-var HybridStore = require('../..').Hybrid;
+var HybridStore = require('..').Hybrid;
 var _ = require('lodash');
 
 describe('Sort / Limit / Skip', function () {
@@ -25,9 +24,9 @@ describe('Sort / Limit / Skip', function () {
       var onPopulated = _.after(NUMBER_OF_DOCS, function () {
         var cursor = hybrid.collection('dollhouse').find({ _id: { $gte: 0 } }).sort({ age: 1 }).limit(LIMIT);
         cursor.toArray(_.after(2, function (err, res) {
-          res.length.should.equal(LIMIT);
+          expect(res).toHaveLength(LIMIT);
           for (var i = 0; i < LIMIT; i++) {
-            res[i].age.should.equal(i);
+            expect(res[i].age).toBe(i);
           }
           done();
         }));
