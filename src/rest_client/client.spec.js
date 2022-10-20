@@ -1,6 +1,5 @@
 var nock = require('nock');
-var Client = require('..').RestClient;
-import { Client as Store } from '..';
+import { Client as Store, RestClient as Client } from '..';
 var mockResponse = require('../rest_client/mock-response.json');
 var _ = require('lodash');
 
