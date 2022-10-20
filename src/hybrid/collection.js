@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var HybridCursor = require('./cursor');
-var cacheUtils = require('../cacheUtils');
+import { generateQueryHash } from '../cacheUtils';
 
 var HybridCollection = function (local, remote, name, options, cacheCollection, projectedDocumentCollection) {
   this._local = local;
@@ -73,7 +73,7 @@ HybridCollection.prototype._cacheQuery = function (query, skip, limit, sort, pro
     collection.save(Object.assign({}, document, { _insertedAt: cachedDateTime }), { skipVersioning: true, skipTimestamp: true });
   });
 
-  var queryHash = cacheUtils.generateQueryHash(query, this._name, skip, limit, sort, project);
+  var queryHash = generateQueryHash(query, this._name, skip, limit, sort, project);
   this._cacheCollection.save({ _id: queryHash, createDateTime: cachedDateTime, resultSet: documentIds }, { skipVersioning: true, skipTimestamp: true });
 };
 
@@ -114,7 +114,7 @@ HybridCollection.prototype._getCachedIds = function (query, skip, limit, sort, c
     return;
   }
 
-  var queryHash = cacheUtils.generateQueryHash(query, this._name, skip, limit, sort);
+  var queryHash = generateQueryHash(query, this._name, skip, limit, sort);
   var minimumChangeDateTime = new Date();
   minimumChangeDateTime.setMinutes(
     minimumChangeDateTime.getMinutes() - this._options.cacheLifeTime
