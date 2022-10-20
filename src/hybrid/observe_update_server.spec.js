@@ -2,7 +2,7 @@ var ViewDb = require('viewdb');
 var _ = require('lodash');
 var ViewDbSocketServer = require('../server/server');
 var Store = require('../client/store');
-var Client = require('../client/rr_client');
+import Client from '../client/rr_client';
 var SocketMock = require('socket.io-mock');
 var HybridStore = require('..').Hybrid;
 

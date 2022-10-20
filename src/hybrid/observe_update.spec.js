@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var ViewDb = require('viewdb');
+import { SocketClient } from '..';
 var ViewDbRemoteClient = require('..').Client;
-var SocketClient = require('..').SocketClient;
 var HybridStore = require('..').Hybrid;
 
 describe('Observe-Update', function() {
