@@ -1,86 +1,82 @@
 /* eslint-disable no-param-reassign */
-// eslint-disable-next-line no-unused-vars
-var LoggerFactory = require('slf').LoggerFactory;
-var uuid = require('node-uuid').v4;
-var Logger = require('slf').Logger;
-var LOG = Logger.getLogger('lx:viewdb-persistence-store-remote');
-var _ = require('lodash');
-var Cursor = require('viewdb').Cursor;
-var util = require('util');
+import { v4 as uuid } from 'node-uuid';
+import { get, isFunction } from 'lodash';
+import { Cursor } from 'viewdb';
 import Observer from './observe';
+import { LoggerFactory } from 'slf';
 
-var RemoteCursor = function (collection, query, options, getDocuments) {
-  Cursor.call(this, collection, query, options, getDocuments);
-};
+const LOG = LoggerFactory.getLogger('lx:viewdb-persistence-store-remote');
 
-util.inherits(RemoteCursor, Cursor);
-
-RemoteCursor.prototype.count = function (applySkipLimit, options, callback) {
-  if (_.isFunction(applySkipLimit)) {
-    callback = applySkipLimit;
-    applySkipLimit = true;
-  }
-  if (_.isFunction(options)) {
-    callback = options;
-    options = {};
+export default class RemoteCursor extends Cursor {
+  constructor(collection, query, options, getDocuments) {
+    super(collection, query, options, getDocuments);
   }
 
-  var skip = _.get(this, '_query.skip', _.get(options, 'skip', 0));
-  var limit = _.get(this, '_query.limit', _.get(options, 'limit', 0));
-
-  var params = {
-    id: uuid(),
-    count: this._query.query || this._query,
-    collection: this._collection._name
-  };
-
-  if (applySkipLimit) {
-    params.skip = skip;
-    params.limit = limit;
-  }
-
-  this._collection._client.request(params, function (err, result) {
-    callback(err, result);
-  });
-};
-
-RemoteCursor.prototype.sort = function (params) {
-  this._query.sort = params;
-  this._refresh();
-  return this;
-};
-
-RemoteCursor.prototype.project = function (params) {
-  this._query.project = params;
-  return this;
-};
-
-RemoteCursor.prototype._refresh = function () {
-  this._collection.emit('change');
-};
-
-RemoteCursor.prototype.observe = function (options) {
-  var self = this;
-  if (self._isObserving) {
-    LOG.error('Already observing this cursor. Collection: %s - Query: %j', _.get(self, '_collection._name'), self._query)
-    throw new Error('Already observing this cursor. Collection: ' + _.get(self, '_collection._name'));
-  }
-  self._isObserving = true;
-
-  var refreshListener = function () {
-    LOG.info('restarting observer due to change');
-    self._handle.stop();
-    self._handle = new Observer(self._collection, options, self._query);
-  }
-  self._collection.on("change", refreshListener);
-
-  self._handle = new Observer(self._collection, options, self._query);
-  return {
-    stop: function () {
-      self._handle.stop();
-      self._collection.removeListener("change", refreshListener);
+  count(applySkipLimit, options, callback) {
+    if (isFunction(applySkipLimit)) {
+      callback = applySkipLimit;
+      applySkipLimit = true;
     }
-  };
-};
+    if (isFunction(options)) {
+      callback = options;
+      options = {};
+    }
 
-module.exports = RemoteCursor;
+    const skip = get(this, '_query.skip', get(options, 'skip', 0));
+    const limit = get(this, '_query.limit', get(options, 'limit', 0));
+
+    const params = {
+      id: uuid(),
+      count: this._query.query || this._query,
+      collection: this._collection._name
+    };
+
+    if (applySkipLimit) {
+      params.skip = skip;
+      params.limit = limit;
+    }
+
+    this._collection._client.request(params, (err, result) => {
+      callback(err, result);
+    });
+  }
+
+  sort(params) {
+    this._query.sort = params;
+    this._refresh();
+    return this;
+  }
+
+  project(params) {
+    this._query.project = params;
+    return this;
+  }
+
+  _refresh() {
+    this._collection.emit('change');
+  }
+
+  observe(options) {
+    if (this._isObserving) {
+      LOG.error('Already observing this cursor. Collection: %s - Query: %j', get(this, '_collection._name'), this._query);
+      throw new Error(`Already observing this cursor. Collection: ${get(this, '_collection._name')}`);
+    }
+    this._isObserving = true;
+
+    const refreshListener = () => {
+      LOG.info('restarting observer due to change');
+      this._handle.stop();
+      this._handle = new Observer(this._collection, options, this._query);
+    };
+
+    this._collection.on('change', refreshListener);
+    this._handle = new Observer(this._collection, options, this._query);
+
+    return {
+      stop: () => {
+        this._handle.stop();
+        this._collection.removeListener('change', refreshListener);
+      }
+    };
+  }
+}

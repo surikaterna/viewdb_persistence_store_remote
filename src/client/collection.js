@@ -4,7 +4,7 @@ var Promise = require('bluebird');
 var _ = require('lodash');
 // var uuid = require('node-uuid').v4;
 // var Kuery = require('kuery');
-var Cursor = require('./cursor');
+import Cursor from './cursor';
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var uuid = require('node-uuid').v4;
