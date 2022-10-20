@@ -1,1 +1,1 @@
-module.exports = require('./rest_client');
+export { default } from './rest_client';
