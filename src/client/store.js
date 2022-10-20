@@ -1,5 +1,5 @@
 var Promise = require('bluebird');
-var Collection = require('./collection');
+import Collection from './collection';
 
 var Store = function (client) {
   this._collections = {};

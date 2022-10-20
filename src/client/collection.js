@@ -1,130 +1,106 @@
-/* eslint-disable no-unused-vars */
 /* eslint-disable no-param-reassign */
-var Promise = require('bluebird');
-var _ = require('lodash');
-// var uuid = require('node-uuid').v4;
-// var Kuery = require('kuery');
+import { isFunction } from 'lodash';
 import Cursor from './cursor';
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var uuid = require('node-uuid').v4;
+import { EventEmitter } from 'events';
+import { v4 as uuid } from 'node-uuid';
 
+export default class Collection extends EventEmitter {
+  static Cursor = Cursor;
 
-var Collection = function (client, collectionName) {
-  EventEmitter.call(this);
-  this._client = client;
-  this._name = collectionName;
-};
-
-util.inherits(Collection, EventEmitter);
-
-Collection.Cursor = Cursor;
-
-Collection.prototype.find = function (query, options) {
-  if (this._isIdentityQuery(query)) {
-    var id = query.id;
-    return [];
+  constructor(client, collectionName) {
+    super();
+    this._client = client;
+    this._name = collectionName;
   }
-  return new Cursor(this, { query: query }, options, this._getDocuments.bind(this));
-};
 
-Collection.prototype.insert = function (document, options, callback) {
-  throw new Error('Not implemented');
-  /*	if(callback) {
-      callback(null, document);
+  find(query, options) {
+    if (this._isIdentityQuery(query)) {
+      return [];
     }
-  */
-};
 
-Collection.prototype.save = function (document, options, callback) {
-  throw new Error('Not implemented');
-  /*	if(callback) {
-      callback(null, document);
+    return new Cursor(this, { query }, options, this._getDocuments);
+  }
+
+  count(query, options, callback) {
+    if (isFunction(query)) {
+      callback = query;
+      query = {};
     }
-  */
-};
 
-Collection.prototype.remove = function (document, options, callback) {
-  throw new Error('Not implemented');
-  /*	if(callback) {
-      callback(null, document);
+    if (isFunction(options)) {
+      callback = options;
+      options = {};
     }
-  */
-};
 
-Collection.prototype._buildParams = function (query, method) {
-  var q = query.query || query;
-  var skip;
-  var limit;
-  var sort;
-  var project;
-  if (query.query) {
-    skip = query.skip;
-    limit = query.limit;
-    sort = query.sort;
-    project = query.project;
-  }
-  var params = {
-    collection: this._name,
-    skip: skip,
-    limit: limit,
-    find: q,
-    sort: sort
-  };
-  if (method) {
-    params.method = method;
-  }
-  if (project) {
-    params.project = project;
-  }
+    const params = {
+      id: uuid(),
+      count: query,
+      collection: this._name
+    };
 
-  return params;
-};
+    if (options) {
+      if (options.limit) {
+        params.limit = options.limit;
+      }
 
-
-Collection.prototype._getDocuments = function (query, callback) {
-  var params = this._buildParams(query);
-  this._client.request(params, function (err, res) {
-    if (err) {
-      callback(err);
-    } else {
-      callback(null, res);
+      if (options.skip) {
+        params.skip = options.skip;
+      }
     }
-  });
-};
 
-Collection.prototype.count = function (query, options, callback) {
-  if (_.isFunction(query)) {
-    callback = query;
-    query = {};
-  }
-  if (_.isFunction(options)) {
-    callback = options;
-    options = {};
+    this._client.request(params, (err, result) => {
+      callback(err, result);
+    });
   }
 
-  var params = {
-    id: uuid(),
-    count: query,
-    collection: this._name
+  insert() {
+    throw new Error('Not implemented');
+  }
+
+  save() {
+    throw new Error('Not implemented');
+  }
+
+  remove() {
+    throw new Error('Not implemented');
+  }
+
+  _getDocuments = (query, callback) => {
+    const params = this._buildParams(query);
+    this._client.request(params, (err, res) => {
+      if (err) {
+        callback(err);
+      } else {
+        callback(null, res);
+      }
+    });
   };
 
-  if (options) {
-    if (options.limit) {
-      params.limit = options.limit;
+  _buildParams(query, method) {
+    const q = query.query || query;
+    const params = {
+      collection: this._name,
+      find: q
+    };
+
+    if (query.query) {
+      params.skip = query.skip;
+      params.limit = query.limit;
+      params.sort = query.sort;
+
+      if (query.project) {
+        params.project = query.project;
+      }
     }
-    if (options.skip) {
-      params.skip = options.skip;
+
+    if (method) {
+      params.method = method;
     }
+
+    return params;
   }
 
-  this._client.request(params, function (err, result) {
-    callback(err, result);
-  });
-};
-
-Collection.prototype._isIdentityQuery = function (query) {
-  return false;
-};
-
-module.exports = Collection;
+  _isIdentityQuery() {
+    return false;
+  }
+}
