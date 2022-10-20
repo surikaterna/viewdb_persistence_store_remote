@@ -2,7 +2,7 @@ var Kuery = require('kuery');
 var Observe = require('./observe');
 var reconcile = require('./reconcile');
 var _ = require('lodash');
-var TimeTracker = require('./timeTracker');
+import TimeTracker from './timeTracker';
 
 var LoggerFactory = require('slf').LoggerFactory;
 var LOG = LoggerFactory.getLogger('lx:viewdb-persistence-store-remote');
