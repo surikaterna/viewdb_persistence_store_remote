@@ -1,34 +1,34 @@
-var _ = require('lodash');
+import { filter, forEach, includes, intersection, isUndefined, map, sortBy, xor } from 'lodash';
 
-module.exports = function reconcile(local, remote) {
+export default function reconcile(local, remote) {
   // Stupid merge logic
   // 0. Add the new docs to the result
-  // 1. If has .version take one with highest version
-  // 2. If no version prefer remote
+  // 1. If they have versions, take the one with the highest version
+  // 2. If no version, prefer remote
 
+  const localIds = map(local, '_id');
+  const remoteIds = map(remote, '_id');
 
-  var localIds = _.map(local, '_id');
-  var remoteIds = _.map(remote, '_id');
+  const newIds = xor(localIds, remoteIds);
+  const inBothIds = intersection(localIds, remoteIds);
 
-  var newIds = _.xor(localIds, remoteIds);
-  var inBothIds = _.intersection(localIds, remoteIds);
-
-  var alldocs = local.concat(remote);
+  const alldocs = local.concat(remote);
 
   // add all new docs
-  var result = _.filter(alldocs, function (doc) { return _.includes(newIds, doc._id); });
-  var localSame = _(local).filter(function (doc) { return _.includes(inBothIds, doc._id); }).sortBy('_id').value();
-  var remoteSame = _(remote).filter(function (doc) { return _.includes(inBothIds, doc._id); }).sortBy('_id').value();
+  const result = filter(alldocs, (doc) => includes(newIds, doc._id));
+  const localSame = sortBy(filter(local, (doc) => includes(inBothIds, doc._id)), '_id');
+  const remoteSame = sortBy(filter(remote, (doc) => includes(inBothIds, doc._id)), '_id');
 
   // TODO; optimize so not a scan per id is needed
-  _.forEach(localSame, function (localDoc, n) {
-    var remoteDoc = remoteSame[n];
+  forEach(localSame, (localDoc, n) => {
+    const remoteDoc = remoteSame[n];
 
-    if (!_.isUndefined(localDoc.version) && !_.isUndefined(remoteDoc.version)) {
+    if (!isUndefined(localDoc.version) && !isUndefined(remoteDoc.version)) {
       result.push(localDoc.version > remoteDoc.version ? localDoc : remoteDoc);
     } else {
       result.push(remoteDoc);
     }
   });
+
   return result;
-};
+}

@@ -1,4 +1,4 @@
-var reconcile = require('./reconcile');
+import reconcile from './reconcile';
 
 describe('Reconcile', function() {
 	it('#reconcile should return remote docs if only remote', function() {
@@ -39,7 +39,7 @@ describe('Reconcile', function() {
 			remote.push({_id:i, version:1});
 		}
 		var start = new Date().getTime();
-		var result = reconcile(local, remote);
+		reconcile(local, remote);
 		var end = new Date().getTime();
 		expect(end-start).toBeLessThan(500);
 	})

@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var reconcile = require('./reconcile');
+import reconcile from './reconcile';
 var merge = require('viewdb').merge;
 function pushArray(arr, arr2) {
   arr.push.apply(arr, arr2);

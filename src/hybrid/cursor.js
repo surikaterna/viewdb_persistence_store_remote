@@ -1,6 +1,6 @@
 var Kuery = require('kuery');
 var Observe = require('./observe');
-var reconcile = require('./reconcile');
+import reconcile from './reconcile';
 var _ = require('lodash');
 import TimeTracker from './timeTracker';
 
