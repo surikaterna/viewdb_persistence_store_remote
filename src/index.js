@@ -1,4 +1,4 @@
-module.exports.Server = require('./server');
+export { default as Server } from './server';
 export { default as Client } from './client';
 module.exports.Hybrid = require('./hybrid');
 module.exports.RestClient = require('./rest_client');
