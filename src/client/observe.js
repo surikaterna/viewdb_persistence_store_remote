@@ -1,88 +1,88 @@
-var _ = require('lodash');
-var Logger = require('slf').Logger;
-var LOG = Logger.getLogger('lx:viewdb-persistence-store-remote');
-var uuid = require('node-uuid').v4;
+import { defaults, forEach, isNil, remove } from 'lodash';
+import { LoggerFactory } from 'slf';
+import { v4 as uuid } from 'node-uuid';
 
-var buildParams = function (defaults, query, collection) {
-  var skip, limit, sort, project;
-  if (query.query) {
-    skip = query.skip;
-    limit = query.limit;
-    sort = query.sort;
-    project = query.project;
-  }
-  var params = _.defaults({
+const LOG = LoggerFactory.getLogger('lx:viewdb-persistence-store-remote');
+
+function buildParams(defaultsOptions, query, collection) {
+  const options = {
     id: uuid(),
-    observe: query.query || query,
+    observe: query.query ?? query,
     collection: collection._name,
-    skip: skip,
-    limit: limit,
-    sort: sort
-  }, defaults);
-  if (project) {
-    params.project = project;
-  }
-  return params;
-};
-
-var Observer = function(collection, options, query) {
-  var remoteHandle = null;
-  var self = this;
-  self.handles = [];
-  var events = {
-    i: !_.isNil(options.init),
-    a: !_.isNil(options.added),
-    r: !_.isNil(options.removed),
-    c: !_.isNil(options.changed),
-    m: !_.isNil(options.moved)
   };
 
-  var params = buildParams({ events: events }, query, collection);
-  var startObserver = function () {
-    var handle = collection._client.subscribe(params, function (err, result) {
+  if (query.query) {
+    options.skip = query.skip;
+    options.limit = query.limit;
+    options.sort = query.sort;
+
+    if (query.project) {
+      options.project = query.project;
+    }
+  }
+
+  return defaults(options, defaultsOptions);
+}
+
+export default class Observer {
+  constructor(collection, options, query) {
+    this._collection = collection;
+    this._options = options;
+    this._remoteHandle = null;
+    this._handles = [];
+    const events = {
+      i: !isNil(options.init),
+      a: !isNil(options.added),
+      r: !isNil(options.removed),
+      c: !isNil(options.changed),
+      m: !isNil(options.moved)
+    }
+
+    this._params = buildParams({ events }, query, collection);
+    this._startObserver();
+  }
+
+  _startObserver() {
+    this._handle = this._collection._client.subscribe(this._params, (err, result) => {
       if (err) {
-        handle.stop();
-        startObserver();
+        this._handle.stop();
+        this._startObserver();
         return;
       }
-      if (remoteHandle || result.handle) {
-        remoteHandle = result.handle || remoteHandle;
 
-        if (self.handles.indexOf(params.id) > -1) {
-          collection._client.request({ 'observe.stop': { h: params.id } });
-          handle.stop();
-          _.remove(self.handles, params.id);
+      if (this._remoteHandle ?? result.handle) {
+        this._remoteHandle = result.handle ?? this._remoteHandle;
+
+        if (this._handles.indexOf(this._params.id) > -1) {
+          this._collection._client.request({ 'observe.stop': { h: this._params.id } });
+          this._handle.stop();
+          remove(this._handles, this._params.id);
         } else {
-          _.forEach(result.changes, function (c) {
+          forEach(result.changes, (c) => {
             if (c.i) { // init
-              options.init(c.i.r);
+              this._options.init(c.i.r);
             } else if (c.a) { // added
-              options.added(c.a.e, c.a.i);
+              this._options.added(c.a.e, c.a.i);
             } else if (c.r) { // removed
-              options.removed(c.r.e, c.r.i);
+              this._options.removed(c.r.e, c.r.i);
             } else if (c.c) { // changed
-              options.changed(c.c.o, c.c.n, c.c.i);
+              this._options.changed(c.c.o, c.c.n, c.c.i);
             } else if (c.m) { // moved
-              options.moved(c.m.e, c.m.o, c.m.n);
+              this._options.moved(c.m.e, c.m.o, c.m.n);
             }
           });
         }
       }
     });
+  }
 
-    return {
-      stop: function () {
-        if (!remoteHandle) {
-          LOG.warn('WARN unsubscribing before receiving subscription handle from server');
-          self.handles.push(params.id);
-        } else {
-          collection._client.request({ 'observe.stop': { h: params.id } });
-          handle.stop();
-        }
-      }
-    };
-  };
-  return startObserver();
+  stop() {
+    if (!this._remoteHandle) {
+      LOG.warn('WARN unsubscribing before receiving subscription handle from server');
+      this._handles.push(this._params.id);
+    } else {
+      this._collection._client.request({ 'observe.stop': { h: this._params.id } });
+      this._handle.stop();
+    }
+  }
 }
-
-module.exports = Observer;

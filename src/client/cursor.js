@@ -7,7 +7,7 @@ var LOG = Logger.getLogger('lx:viewdb-persistence-store-remote');
 var _ = require('lodash');
 var Cursor = require('viewdb').Cursor;
 var util = require('util');
-var Observer = require('./observe');
+import Observer from './observe';
 
 var RemoteCursor = function (collection, query, options, getDocuments) {
   Cursor.call(this, collection, query, options, getDocuments);
