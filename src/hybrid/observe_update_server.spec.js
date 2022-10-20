@@ -1,6 +1,6 @@
 var ViewDb = require('viewdb');
 var _ = require('lodash');
-var ViewDbSocketServer = require('../server/server');
+import ViewDbSocketServer from '../server/server';
 import Store from '../client/store';
 import Client from '../client/rr_client';
 var SocketMock = require('socket.io-mock');

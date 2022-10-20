@@ -1,174 +1,220 @@
-var _ = require('lodash');
+import { forOwn, isNumber, keys } from 'lodash';
+import { LoggerFactory } from 'slf';
 
-var ViewDbSocketServer = function (viewdb, socket, queryDecorator, globalLimit, readPreference) {
-  var _observers = {};
-  var _queryDecorator;
-  if (!queryDecorator) {
-    _queryDecorator = function (col, q, cb) {
-      cb(q);
-    }
-  } else {
-    _queryDecorator = queryDecorator;
+const log = LoggerFactory.getLogger('viewdb:persistence-store:remote:viewdb-socket-server')
+
+export default class ViewDbSocketServer {
+  constructor(viewdb, socket, queryDecorator, globalLimit, readPreference) {
+    this._viewdb = viewdb
+    this._socket = socket
+    this._queryDecorator = queryDecorator ?? ((col, q, cb) => cb(q));
+    this._globalLimit = globalLimit;
+    this._readPreference = readPreference;
+
+    this._observers = {};
+
+    socket.on('disconnect', this._handleDisconnect);
+    socket.on('/vdb/request', this._handleViewDbRequest);
   }
-  socket.on('disconnect', function () {
-    _.forOwn(_observers, function (observer, handle) {
+
+  _handleDisconnect = () => {
+    forOwn(this._observers, (observer, handle) => {
       observer.handle.stop()
-      delete _observers[handle];
-    })
-  });
-  socket.on('/vdb/request', function (request) {
+      delete this._observers[handle];
+    });
+  };
+
+  _handleViewDbRequest = (request) => {
     if (request.p.find) {
-      _queryDecorator(request.p.collection, request.p.find, function (decoratedQuery) {
-        var cursor = viewdb.collection(request.p.collection).find(decoratedQuery);
-        if (readPreference && cursor.setReadPreference) {
-          cursor.setReadPreference(readPreference);
-        }
-        if (request.p.sort) {
-          cursor.sort(request.p.sort);
-        }
-        if (_.isNumber(request.p.limit)) {
-          cursor.limit(request.p.limit);
-        } else if (globalLimit && _.isNumber(globalLimit)) {
-          cursor.limit(globalLimit);
-        }
-        if (_.isNumber(request.p.skip)) {
-          cursor.skip(request.p.skip);
-        }
-        if (request.p.project) {
-          if (cursor.project) {
-            cursor.project(request.p.project);
-          } else {
-            console.log('warn: no support for project on cursor');
-          }
-        }
-        cursor
-          .toArray(function (err, result) {
-            if (err) {
-              console.log(err)
-            } else {
-              socket.emit('/vdb/response',
-                {
-                  i: request.i,
-                  p: result
-                });
-            }
-          });
-      });
-    } else if (request.p.count) {
-      _queryDecorator(request.p.collection, request.p.count, function (decoratedQuery) {
-        var cursor = viewdb.collection(request.p.collection).find(decoratedQuery);
-        if (readPreference && cursor.setReadPreference) {
-          cursor.setReadPreference(readPreference);
-        }
-        if (_.isNumber(request.p.limit)) {
-          cursor.limit(request.p.limit);
-        }
-        if (_.isNumber(request.p.skip)) {
-          cursor.skip(request.p.skip);
-        }
-        cursor.count(true, function (err, result) {
-          if (err) {
-            console.log(err)
-          } else {
-            socket.emit('/vdb/response',
-              {
-                i: request.i,
-                p: result
-              });
-          }
-        });
-      });
-    } else if (request.p.observe) {
-      var observeId = request.p.id;
-      _queryDecorator(request.p.collection, request.p.observe, function (decoratedQuery) {
-        var cursor = viewdb.collection(request.p.collection).find(decoratedQuery);
-        if (readPreference && cursor.setReadPreference) {
-          cursor.setReadPreference(readPreference);
-        }
-        if (request.p.sort) {
-          cursor.sort(request.p.sort);
-        }
-        if (_.isNumber(request.p.limit)) {
-          cursor.limit(request.p.limit);
-        } else if (globalLimit && _.isNumber(globalLimit)) {
-          cursor.limit(globalLimit);
-        }
-        if (_.isNumber(request.p.skip)) {
-          cursor.skip(request.p.skip);
-        }
-        if (request.p.project) {
-          cursor.project(request.p.project);
-        }
-        var observeOptions = {
-          init: function (result) {
-            sendChange(socket, { i: { r: result } }, request);
-          },
-          added: function (e, index) {
-            sendChange(socket, { a: { e: e, i: index } }, request);
-          },
-          removed: function (e, index) {
-            sendChange(socket, { r: { e: e, i: index } }, request);
-          },
-          changed: function (asis, tobe, index) {
-            sendChange(socket, { c: { o: asis, n: tobe, i: index } }, request);
-          },
-          moved: function (e, oldIndex, newIndex) {
-            sendChange(socket, { m: { e: e, o: oldIndex, n: newIndex } }, request);
-          },
-          oplog: true
-        };
+      return this._handleFindRequest(request);
+    }
 
-        if (request.p.events) {
-          if (!request.p.events.i) {
-            delete observeOptions.init;
-          }
+    if (request.p.count) {
+      return this._handleCountRequest(request);
+    }
 
-          if (!request.p.events.a) {
-            delete observeOptions.added;
-          }
+    if (request.p.observe) {
+      return this._handleObserveRequest(request);
+    }
 
-          if (!request.p.events.r) {
-            delete observeOptions.removed;
-          }
+    if (request.p['observe.stop']) {
+      return this._handleStopObserveRequest(request);
+    }
 
-          if (!request.p.events.c) {
-            delete observeOptions.changed;
-          }
+    throw new Error(`Unknown request from client: ${keys(request)} || ${JSON.stringify(request.p)}`);
+  };
 
-          if (!request.p.events.m) {
-            delete observeOptions.moved;
-          }
-        }
+  _handleFindRequest = (request) => {
+    this._queryDecorator(request.p.collection, request.p.find, (decoratedQuery) => {
+      const cursor = this._viewdb.collection(request.p.collection).find(decoratedQuery);
 
-        var observeHandle = cursor.observe(observeOptions);
-        _observers[observeId] = {
-          i: request.i
-          , handle: observeHandle
-        };
-        socket.emit('/vdb/response', {
-          i: request.i,
-          p: {
-            handle: observeId
-          }
-        });
-      });
-    } else if (request.p["observe.stop"]) {
-      var handle = request.p["observe.stop"].h;
-      if (handle) {
-        if (_observers[handle]) {
-          _observers[handle].handle.stop();
-          delete _observers[handle];
-        } else {
-          console.error("Observer not registered on this server: " + handle);
-        }
-      } else {
-        console.log("Observe stopped failed: " + request.p["observe.stop"].h);
+      if (this._readPreference && cursor.setReadPreference) {
+        cursor.setReadPreference(this._readPreference);
       }
+
+      if (request.p.sort) {
+        cursor.sort(request.p.sort);
+      }
+
+      if (isNumber(request.p.limit)) {
+        cursor.limit(request.p.limit);
+      } else if (this._globalLimit && isNumber(this._globalLimit)) {
+        cursor.limit(this._globalLimit);
+      }
+
+      if (isNumber(request.p.skip)) {
+        cursor.skip(request.p.skip);
+      }
+
+      if (request.p.project) {
+        if (cursor.project) {
+          cursor.project(request.p.project);
+        } else {
+          log.warn('no support for project on cursor');
+        }
+      }
+
+      cursor
+        .toArray((err, result) => {
+          if (err) {
+            log.warn('Error: %o', err)
+          } else {
+            this._socket.emit('/vdb/response', {
+              i: request.i,
+              p: result
+            });
+          }
+        });
+    });
+  };
+
+  _handleCountRequest = (request) => {
+    this._queryDecorator(request.p.collection, request.p.count, (decoratedQuery) => {
+      const cursor = this._viewdb.collection(request.p.collection).find(decoratedQuery);
+
+      if (this._readPreference && cursor.setReadPreference) {
+        cursor.setReadPreference(this._readPreference);
+      }
+
+      if (isNumber(request.p.limit)) {
+        cursor.limit(request.p.limit);
+      }
+
+      if (isNumber(request.p.skip)) {
+        cursor.skip(request.p.skip);
+      }
+
+      cursor.count(true, (err, result) => {
+        if (err) {
+          log.warn('Error: %o', err)
+        } else {
+          this._socket.emit('/vdb/response', {
+            i: request.i,
+            p: result
+          });
+        }
+      });
+    });
+  };
+
+  _handleObserveRequest = (request) => {
+    const observeId = request.p.id;
+
+    this._queryDecorator(request.p.collection, request.p.observe, (decoratedQuery) => {
+      const cursor = this._viewdb.collection(request.p.collection).find(decoratedQuery);
+
+      if (this._readPreference && cursor.setReadPreference) {
+        cursor.setReadPreference(this._readPreference);
+      }
+
+      if (request.p.sort) {
+        cursor.sort(request.p.sort);
+      }
+
+      if (isNumber(request.p.limit)) {
+        cursor.limit(request.p.limit);
+      } else if (this._globalLimit && isNumber(this._globalLimit)) {
+        cursor.limit(this._globalLimit);
+      }
+
+      if (isNumber(request.p.skip)) {
+        cursor.skip(request.p.skip);
+      }
+
+      if (request.p.project) {
+        cursor.project(request.p.project);
+      }
+
+      const observeOptions = {
+        init: (result) => {
+          sendChange(this._socket, { i: { r: result } }, request);
+        },
+        added: (e, index) => {
+          sendChange(this._socket, { a: { e: e, i: index } }, request);
+        },
+        removed: (e, index) => {
+          sendChange(this._socket, { r: { e: e, i: index } }, request);
+        },
+        changed: (asis, tobe, index) => {
+          sendChange(this._socket, { c: { o: asis, n: tobe, i: index } }, request);
+        },
+        moved: (e, oldIndex, newIndex) => {
+          sendChange(this._socket, { m: { e: e, o: oldIndex, n: newIndex } }, request);
+        },
+        oplog: true
+      };
+
+      if (request.p.events) {
+        if (!request.p.events.i) {
+          delete observeOptions.init;
+        }
+
+        if (!request.p.events.a) {
+          delete observeOptions.added;
+        }
+
+        if (!request.p.events.r) {
+          delete observeOptions.removed;
+        }
+
+        if (!request.p.events.c) {
+          delete observeOptions.changed;
+        }
+
+        if (!request.p.events.m) {
+          delete observeOptions.moved;
+        }
+      }
+
+      const observeHandle = cursor.observe(observeOptions);
+
+      this._observers[observeId] = {
+        i: request.i
+        , handle: observeHandle
+      };
+
+      this._socket.emit('/vdb/response', {
+        i: request.i,
+        p: {
+          handle: observeId
+        }
+      });
+    });
+  };
+
+  _handleStopObserveRequest = (request) => {
+    const handle = request.p['observe.stop'].h;
+    if (handle) {
+      if (this._observers[handle]) {
+        this._observers[handle].handle.stop();
+        delete this._observers[handle];
+      } else {
+        log.error('Observer not registered on this server: %s', handle);
+      }
+    } else {
+      log.warn('Observe stopped failed: %s', handle);
     }
-    else {
-      throw new Error("Unknown request from client: " + _.keys(request) + " || " + JSON.stringify(request.p));
-    }
-  });
+  };
 }
 
 function sendChange(socket, change, request) {
@@ -179,5 +225,3 @@ function sendChange(socket, change, request) {
     }
   });
 }
-
-module.exports = ViewDbSocketServer;
