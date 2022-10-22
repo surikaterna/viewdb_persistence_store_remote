@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var Promise = require('bluebird');
-var Collection = require('./collection');
+import Collection from './collection';
 
 var defaultOptions = {
   syncWrites: false, // if local writes should be sent over the wire to remote
