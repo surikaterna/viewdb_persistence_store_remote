@@ -1,4 +1,4 @@
-var Store = require('./store');
+import Store from './store';
 var LocalStore = require('viewdb/lib/inmemory/store');
 var Cursor = require('viewdb').Cursor;
 

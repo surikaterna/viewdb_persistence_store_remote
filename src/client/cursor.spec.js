@@ -3,7 +3,7 @@ import ViewDbSocketServer from '../server/server';
 import Store from './store';
 import Client from './rr_client';
 var SocketMock = require('socket.io-mock');
-var HybridStore = require('..').Hybrid;
+import { Hybrid as HybridStore } from '..';
 
 describe('Remote server/client', function () {
   var clientVdb, remote, socketServer, socketClient, clientStore, client;
