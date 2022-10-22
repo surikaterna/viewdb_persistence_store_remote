@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var HybridCursor = require('./cursor');
+import HybridCursor from './cursor';
 import { generateQueryHash } from '../cacheUtils';
 
 var HybridCollection = function (local, remote, name, options, cacheCollection, projectedDocumentCollection) {

@@ -1,285 +1,297 @@
-var Kuery = require('kuery');
+import Kuery from 'kuery';
 import Observe from './observe';
 import reconcile from './reconcile';
-var _ = require('lodash');
+import { isFunction } from 'lodash';
 import TimeTracker from './timeTracker';
+import { LoggerFactory } from 'slf';
 
-var LoggerFactory = require('slf').LoggerFactory;
-var LOG = LoggerFactory.getLogger('lx:viewdb-persistence-store-remote');
-/**
- *
- * @param {*} query Mongodb query, for example: { 'identifiers.identifier': 'abc' }
- * @param {*} local Local cursor
- * @param {*} remote Remote cursor
- * @param {*} findOptions Not in use?
- * @param {*} options Options supplied from collection.
- */
-var HybridCursor = function (query, local, remote, findOptions, options) {
-  this._query = query;
-  this._sort = null;
-  this._limit = null;
-  this._skip = 0;
-  this._local = local;
-  this._remote = remote;
-  this._findOptions = findOptions;
-  this._options = options;
-  this._onCacheUpdateCallback = options.onCacheUpdateCallback;
-  this._getCachedData = options.getCachedData;
-};
+const LOG = LoggerFactory.getLogger('viewdb:persistence-store:remote:hybrid-cursor');
 
-HybridCursor.prototype._toArray = function (callback) {
-  //reconcile strategy
-  var self = this;
-  var localData = null;
-  var remoteData = null;
-  var localErr = null;
-  var remoteErr = null;
-  var kuery = new Kuery(this._query);
-  var sort = this._sort;
-  var limit = this._limit;
-  var skip = this._skip;
-  var project = this._project;
-
-  if (sort) {
-    kuery.sort(sort);
-  }
-  if (limit) {
-    kuery.limit(limit);
-  }
-  if (skip) {
-    kuery.skip(skip);
+export default class HybridCursor {
+  /**
+   *
+   * @param {*} query Mongodb query, for example: { 'identifiers.identifier': 'abc' }
+   * @param {*} local Local cursor
+   * @param {*} remote Remote cursor
+   * @param {*} findOptions Not in use?
+   * @param {*} options Options supplied from collection.
+   */
+  constructor(query, local, remote, findOptions, options) {
+    this._query = query;
+    this._sort = null;
+    this._limit = null;
+    this._skip = 0;
+    this._local = local;
+    this._remote = remote;
+    this._findOptions = findOptions;
+    this._options = options;
+    this._onCacheUpdateCallback = options.onCacheUpdateCallback;
+    this._getCachedData = options.getCachedData;
   }
 
-  function serverResult(err, result) {
-    if (err) {
-      remoteErr = err;
-      result = result || [];
-      if (self._options.throwRemoteErr) {
-        return callback(err);
-      }
+  toArray(callback) {
+    const timeTracker = new TimeTracker();
+    let wrappedCallback = callback;
+
+    if (this._options.loggingEnabled) {
+      wrappedCallback = () => {
+        timeTracker.stop();
+        const queryTime = timeTracker.getExecutionTime();
+        if (queryTime > this._options.queryMaxTime) {
+          LOG.warn('Query %j, took longer than allowed max time of %s seconds.', this._query, this._options.queryMaxTime);
+        }
+
+        return callback.apply(this, arguments);
+      };
     }
-    remoteData = result;
-    if (localData) {
-      var combinedResult = kuery.find(reconcile(localData, remoteData));
-      callback(null, combinedResult);
-      if (_.isFunction(self._onCacheUpdateCallback)) {
-        self._onCacheUpdateCallback(self._query, skip, limit, sort, project, combinedResult);
-      }
+
+    timeTracker.start();
+    if (this._options.cacheQueries && this._getCachedData) {
+      this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, (err, data) => {
+        if (data) {
+          wrappedCallback(null, data);
+          return;
+        }
+
+        this._toArray(wrappedCallback);
+      });
+    } else {
+      this._toArray(wrappedCallback);
     }
   }
 
-  function localResult(err, result) {
-    if (err) {
-      localErr = err;
-      return callback(err, result);
+  _toArray(callback) {
+    //reconcile strategy
+    let localData = null;
+    let remoteData = null;
+    let localErr = null;
+    let remoteErr = null;
+    const kuery = new Kuery(this._query);
+    const sort = this._sort;
+    const limit = this._limit;
+    const skip = this._skip;
+    const project = this._project;
+
+    if (sort) {
+      kuery.sort(sort);
+    }
+    if (limit) {
+      kuery.limit(limit);
+    }
+    if (skip) {
+      kuery.skip(skip);
     }
 
-    localData = result;
-    if (remoteData || remoteErr) {
-      if (!(remoteErr && self._options.throwRemoteErr)) {
-        var combinedResult = kuery.find(reconcile(localData, remoteData || []));
-        callback(null, combinedResult);
-        if (_.isFunction(self._onCacheUpdateCallback)) {
-          self._onCacheUpdateCallback(self._query, skip, limit, sort, project, combinedResult);
+    const serverResult = (err, result) => {
+      if (err) {
+        remoteErr = err;
+        result = result || [];
+
+        if (this._options.throwRemoteErr) {
+          return callback(err);
         }
       }
-    } else {
-      if (self._options.localFirst) {
-        callback(err, localData);
+
+      remoteData = result;
+
+      if (localData) {
+        const combinedResult = kuery.find(reconcile(localData, remoteData));
+        callback(null, combinedResult);
+        if (isFunction(this._onCacheUpdateCallback)) {
+          this._onCacheUpdateCallback(this._query, skip, limit, sort, project, combinedResult);
+        }
       }
-    }
-  }
-
-  if (sort) {
-    this._local.sort(sort);
-    this._remote.sort(sort);
-  }
-  if (limit) {
-    this._local.limit(limit);
-    this._remote.limit(limit);
-  }
-  if (skip) {
-    this._local.skip(skip);
-    this._remote.skip(skip);
-  }
-  if (project && _.isFunction(this._remote.project)) {
-    this._remote.project(project);
-  }
-
-  this._local.toArray(localResult);
-  this._remote.toArray(serverResult);
-};
-
-HybridCursor.prototype.toArray = function (callback) {
-  var self = this;
-  var timeTracker = new TimeTracker();
-  var wrappedCallback = callback;
-
-  if (this._options.loggingEnabled) {
-    wrappedCallback = function () {
-      timeTracker.stop();
-      var queryTime = timeTracker.getExecutionTime();
-      if (queryTime > self._options.queryMaxTime) {
-        LOG.warn('Query %j, took longer than allowed max time of %s seconds.', self._query, self._options.queryMaxTime);
-      }
-
-      return callback.apply(self, arguments);
     };
-  }
-  timeTracker.start();
-  if (this._options.cacheQueries && this._getCachedData) {
-    this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, function (err, data) {
-      if (data) {
-        wrappedCallback(null, data);
-        return;
+
+    const localResult = (err, result) => {
+      if (err) {
+        localErr = err;
+        return callback(err, result);
       }
 
-      self._toArray(wrappedCallback);
-    });
-  } else {
-    this._toArray(wrappedCallback);
-  }
-};
+      localData = result;
 
-HybridCursor.prototype._refresh = function () {
-  this._remote._refresh();
-  this._local._refresh();
-};
+      if (remoteData || remoteErr) {
+        if (!(remoteErr && this._options.throwRemoteErr)) {
+          const combinedResult = kuery.find(reconcile(localData, remoteData || []));
+          callback(null, combinedResult);
 
-HybridCursor.prototype.sort = function (sort) {
-  this._sort = sort;
-  return this;
-};
-
-HybridCursor.prototype.limit = function (limit) {
-  this._limit = limit;
-  return this;
-};
-
-HybridCursor.prototype.skip = function (skip) {
-  this._skip = skip;
-  return this;
-};
-
-HybridCursor.prototype.updateQuery = function (query) {
-  this._local._query.query = query;
-  this._remote._query.query = query;
-  this._query = query;
-  this._refresh();
-};
-
-HybridCursor.prototype._onObserverCacheUpdate = function (result) {
-  if (_.isFunction(this._onCacheUpdateCallback)) {
-    this._onCacheUpdateCallback(this._query, this._skip, this._limit, this._sort, this._project, result);
-  }
-};
-
-HybridCursor.prototype._getObserverData = function (callback) {
-  this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, callback);
-};
-
-HybridCursor.prototype._count = function (options, callback) {
-  var self = this;
-  var localCount = null;
-  var remoteCount = null;
-
-  var timeTracker = new TimeTracker();
-  var wrappedCallback = callback;
-
-  if (this._options.loggingEnabled) {
-    wrappedCallback = function () {
-      timeTracker.stop();
-      var queryTime = timeTracker.getExecutionTime();
-      if (queryTime > self._options.queryMaxTime) {
-        LOG.warn('Count query %j, took longer than allowed max time of %s seconds.', self._query, self._options.queryMaxTime);
+          if (isFunction(this._onCacheUpdateCallback)) {
+            this._onCacheUpdateCallback(this._query, skip, limit, sort, project, combinedResult);
+          }
+        }
+      } else {
+        if (this._options.localFirst) {
+          callback(err, localData);
+        }
       }
-
-      return callback.apply(self, arguments);
-    };
-  }
-
-  timeTracker.start();
-
-  function serverResult(err, count) {
-    if (err) {
-      return wrappedCallback(err);
-    }
-    remoteCount = count;
-    return wrappedCallback(null, count);
-  }
-
-  function localResult(err, count) {
-    if (err) {
-      return wrappedCallback(err, count);
     }
 
-    localCount = count;
-    if (remoteCount) {
-      wrappedCallback(null, remoteCount);
+    if (sort) {
+      this._local.sort(sort);
+      this._remote.sort(sort);
+    }
+
+    if (limit) {
+      this._local.limit(limit);
+      this._remote.limit(limit);
+    }
+
+    if (skip) {
+      this._local.skip(skip);
+      this._remote.skip(skip);
+    }
+
+    if (project && isFunction(this._remote.project)) {
+      this._remote.project(project);
+    }
+
+    this._local.toArray(localResult);
+    this._remote.toArray(serverResult);
+  }
+
+  sort(sort) {
+    this._sort = sort;
+    return this;
+  }
+
+  limit(limit) {
+    this._limit = limit;
+    return this;
+  }
+
+  skip(skip) {
+    this._skip = skip;
+    return this;
+  }
+
+  project(project) {
+    this._project = project;
+    return this;
+  }
+
+  observe(options) {
+    const sort = this._sort;
+    const limit = this._limit;
+    const skip = this._skip;
+
+    if (sort) {
+      this._local.sort(sort);
+      this._remote.sort(sort);
+    }
+
+    if (limit) {
+      this._local.limit(limit);
+      this._remote.limit(limit);
+    }
+
+    if (skip) {
+      this._local.skip(skip);
+      this._remote.skip(skip);
+    }
+
+    if (this._project && isFunction(this._remote.project)) {
+      this._remote.project(this._project);
+    }
+
+    let modifiedOptions = options;
+    if (this._options.cacheQueries) {
+      modifiedOptions = Object.assign({}, options, { cacheCallback: this._onObserverCacheUpdate, getCache: this._getObserverData });
+    }
+
+    return new Observe(this._local, this._remote, this._options, modifiedOptions);
+  }
+
+  _onObserverCacheUpdate = (result) => {
+    if (isFunction(this._onCacheUpdateCallback)) {
+      this._onCacheUpdateCallback(this._query, this._skip, this._limit, this._sort, this._project, result);
+    }
+  };
+
+  _getObserverData = (callback) => {
+    this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, callback);
+  }
+
+  count(options, callback) {
+    if (isFunction(options)) {
+      callback = options;
+      options = undefined;
+    }
+
+    if (this._getCachedData) {
+      this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, (err, data) => {
+        if (data) {
+          callback(null, data.length);
+          return;
+        }
+
+        this._count(options, callback);
+      });
     } else {
-      if (self._options.localFirst) {
-        wrappedCallback(err, localCount);
-      }
+      this._count(options, callback);
     }
   }
 
-  this._local.count(options, localResult);
-  this._remote.count(options, serverResult);
-};
+  _count(options, callback) {
+    let localCount = null;
+    let remoteCount = null;
 
-HybridCursor.prototype.count = function (options, callback) {
-  var self = this;
-  if (_.isFunction(options)) {
-    callback = options;
-    options = undefined;
-  }
+    const timeTracker = new TimeTracker();
+    let wrappedCallback = callback;
 
-  if (this._getCachedData) {
-    this._getCachedData(this._query, this._skip, this._limit, this._sort, this._project, function (err, data) {
-      if (data) {
-        callback(null, data.length);
-        return;
+    if (this._options.loggingEnabled) {
+      wrappedCallback = () => {
+        timeTracker.stop();
+        const queryTime = timeTracker.getExecutionTime();
+
+        if (queryTime > this._options.queryMaxTime) {
+          LOG.warn('Count query %j, took longer than allowed max time of %s seconds.', this._query, this._options.queryMaxTime);
+        }
+
+        return callback.apply(self, arguments);
+      };
+    }
+
+    timeTracker.start();
+
+    const serverResult = (err, count) => {
+      if (err) {
+        return wrappedCallback(err);
       }
 
-      self._count(options, callback);
-    });
-  } else {
-    this._count(options, callback);
-  }
-};
+      remoteCount = count;
+      return wrappedCallback(null, count);
+    };
 
-HybridCursor.prototype.observe = function (options) {
-  var sort = this._sort;
-  var limit = this._limit;
-  var skip = this._skip;
+    const localResult = (err, count) => {
+      if (err) {
+        return wrappedCallback(err, count);
+      }
 
-  if (sort) {
-    this._local.sort(sort);
-    this._remote.sort(sort);
-  }
-  if (limit) {
-    this._local.limit(limit);
-    this._remote.limit(limit);
-  }
-  if (skip) {
-    this._local.skip(skip);
-    this._remote.skip(skip);
-  }
-  if (this._project && _.isFunction(this._remote.project)) {
-    this._remote.project(this._project);
+      localCount = count;
+
+      if (remoteCount) {
+        wrappedCallback(null, remoteCount);
+      } else {
+        if (this._options.localFirst) {
+          wrappedCallback(err, localCount);
+        }
+      }
+    };
+
+    this._local.count(options, localResult);
+    this._remote.count(options, serverResult);
   }
 
-  var modifiedOptions = options;
-  if (this._options.cacheQueries) {
-    modifiedOptions = Object.assign({}, options, { cacheCallback: this._onObserverCacheUpdate.bind(this), getCache: this._getObserverData.bind(this) });
+  updateQuery(query) {
+    this._local._query.query = query;
+    this._remote._query.query = query;
+    this._query = query;
+    this._refresh();
   }
 
-  return new Observe(this._local, this._remote, this._options, modifiedOptions);
-};
-
-HybridCursor.prototype.project = function (project) {
-  this._project = project;
-  return this;
-};
-
-module.exports = HybridCursor;
+  _refresh() {
+    this._remote._refresh();
+    this._local._refresh();
+  }
+}

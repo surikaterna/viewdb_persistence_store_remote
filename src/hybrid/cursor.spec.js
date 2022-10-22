@@ -1,4 +1,4 @@
-var Cursor = require('./cursor');
+import Cursor from './cursor';
 var LocalCursor = require('viewdb').Cursor;
 
 describe('Cursor', function() {
