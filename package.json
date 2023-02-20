@@ -32,14 +32,14 @@
     "nock": "^8.0.0",
     "should": "^13.2.3",
     "socket.io-mock": "^1.2.3",
-    "viewdb": "^0.5.11"
+    "viewdb": "^0.5.11",
+    "eslint": "^8.34.0",
+    "eslint-config-surikat": "^4.0.0"
   },
   "dependencies": {
     "bluebird": "^2.9.30",
     "crypto-js": "^4.1.1",
     "debug": "^2.2.0",
-    "eslint": "^8.34.0",
-    "eslint-config-surikat": "^3.0.0",
     "kuery": "^0.5.3",
     "lodash": "^4.8.2",
     "node-uuid": "^1.4.3",
