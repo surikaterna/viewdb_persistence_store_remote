@@ -10,7 +10,7 @@ var testOptions = {
 };
 
 describe('RestClient', function () {
-  afterEach(function() {
+  afterEach(function () {
     nock.cleanAll();
   });
   it('#request should work', function (done) {
@@ -57,9 +57,9 @@ describe('RestClient', function () {
   });
 
   it('#observe should stop when calling stop', function (done) {
-    var restClient = new Client('http://www.example.com/', {}, testOptions);
-    var hitCount = 0;
-    var stop;
+    const restClient = new Client('http://www.example.com/', {}, testOptions);
+    let hitCount = 0;
+    let stop;
 
     nock('http://www.example.com')
       .persist() // keep nock alive after first call
@@ -70,8 +70,8 @@ describe('RestClient', function () {
         return [201, mockResponse, {}];
       });
 
-    var observer = restClient.subscribe({ observe: { name: 'a' }, collection: 'parcel', events: {} }, function () {});
-    stop = _.after(1, observer.stop)
+    const observer = restClient.subscribe({ observe: { name: 'a' }, collection: 'parcel', events: {} }, function () {});
+    stop = _.after(1, observer.stop);
 
     setTimeout(function () {
       hitCount.should.equal(1);
@@ -80,7 +80,7 @@ describe('RestClient', function () {
   });
 
   it('#observe should notify changes', function (done) {
-    var restClient = new Client('http://www.example.com', {}, testOptions);
+    const restClient = new Client('http://www.example.com', {}, testOptions);
 
     // mock returning response with data - dies after one hit
     nock('http://www.example.com')
@@ -91,8 +91,8 @@ describe('RestClient', function () {
       .get('/party?q=%7B%22name%22%3A%22a%22%7D')
       .reply(201, {});
 
-    var hits = 0;
-    var verify = function (res) {
+    let hits = 0;
+    const verify = function (res) {
       ++hits;
       if (hits === 1) {
         should.equal(res.changes[0].a.e.name, 'firstName');
@@ -106,7 +106,9 @@ describe('RestClient', function () {
     };
 
     const handle = restClient.subscribe({ observe: { name: 'a' }, collection: 'party', events: {} }, function (err, res) {
-      verify(res);
+      if (res) {
+        verify(res);
+      }
     });
   });
 });
