@@ -1,6 +1,6 @@
 {
   "name": "viewdb_persistence_store_remote",
-  "version": "3.3.6",
+  "version": "3.3.7",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "bluebird": "^2.9.30",
     "crypto-js": "^4.1.1",
     "debug": "^2.2.0",
-    "kuery": "^0.5.3",
+    "kuery": "^0.5.4",
     "lodash": "^4.17.21",
     "node-uuid": "^1.4.3",
     "slf": "^1.0.0"
