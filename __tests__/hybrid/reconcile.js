@@ -43,5 +43,13 @@ describe('Reconcile', function() {
 		var result = reconcile(local, remote);
 		var end = new Date().getTime();
 		(end-start).should.be.below(500);
-	})		
+	})
+	it('#reconcile should not break if local contain duplicates, and update to newest local copy', function() {
+		const result = reconcile([{_id:1, version:1}, {_id:1, version:2}], [{_id:1, version:1}])
+		result[0].version.should.equal(2)
+	})
+	it('#reconcile should not break if local contain duplicates, and should get best copy with version', function() {
+		const result = reconcile([{_id:1}, {_id:1, version:1}], [{_id:1}])
+		result[0].version.should.equal(1);
+	})
 });
