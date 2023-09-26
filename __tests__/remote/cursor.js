@@ -31,45 +31,62 @@ describe('Remote server/client', function () {
   });
   it('#remote query', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo', test: 'success' });
-    clientVdb.collection('dollhouse').find({ _id: 'echo' }).toArray(function (err, res) {
-      res[0].test.should.equal('success');
-      done();
-    })
+    clientVdb
+      .collection('dollhouse')
+      .find({ _id: 'echo' })
+      .toArray(function (err, res) {
+        res[0].test.should.equal('success');
+        done();
+      });
   });
   it('#remote cursor count', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
-    clientVdb.collection('dollhouse').find({ _id: 'echo' }).count(function (err, res) {
-      res.should.equal(1);
-      done();
-    });
+    clientVdb
+      .collection('dollhouse')
+      .find({ _id: 'echo' })
+      .count(function (err, res) {
+        res.should.equal(1);
+        done();
+      });
   });
   it('#remote cursor count should use skip/limit from cursor', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
     remote.collection('dollhouse').insert({ _id: 'echo3' });
-    clientVdb.collection('dollhouse').find({}).skip(1).limit(1).count(function (err, res) {
-      res.should.equal(1);
-      done();
-    });
+    clientVdb
+      .collection('dollhouse')
+      .find({})
+      .skip(1)
+      .limit(1)
+      .count(function (err, res) {
+        res.should.equal(1);
+        done();
+      });
   });
   it('#remote cursor count should use skip from options', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
     remote.collection('dollhouse').insert({ _id: 'echo3' });
-    clientVdb.collection('dollhouse').find({}).count({}, { skip: 1 }, function (err, res) {
-      res.should.equal(2);
-      done();
-    });
+    clientVdb
+      .collection('dollhouse')
+      .find({})
+      .count({}, { skip: 1 }, function (err, res) {
+        res.should.equal(2);
+        done();
+      });
   });
   it('#remote cursor count should use limit from options', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
     remote.collection('dollhouse').insert({ _id: 'echo3' });
-    clientVdb.collection('dollhouse').find({}).count({}, { limit: 2 }, function (err, res) {
-      res.should.equal(2);
-      done();
-    });
+    clientVdb
+      .collection('dollhouse')
+      .find({})
+      .count({}, { limit: 2 }, function (err, res) {
+        res.should.equal(2);
+        done();
+      });
   });
   it('#remote collection count', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });

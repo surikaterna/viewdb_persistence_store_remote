@@ -13,7 +13,7 @@ describe('Sort / Limit / Skip', function () {
     remote = new ViewDb();
     hybrid = new ViewDb(new HybridStore(local, remote, { throttleObserveRefresh: 0 }));
     hybrid.open().then(function () {
-      done()
+      done();
     });
   });
 
@@ -21,16 +21,21 @@ describe('Sort / Limit / Skip', function () {
     var NUMBER_OF_DOCS = 20;
     var LIMIT = 5;
     hybrid.open().then(function () {
-
       var onPopulated = _.after(NUMBER_OF_DOCS, function () {
-        var cursor = hybrid.collection('dollhouse').find({ _id: { $gte: 0 } }).sort({ age: 1 }).limit(LIMIT);
-        cursor.toArray(_.after(2, function (err, res) {
-          res.length.should.equal(LIMIT);
-          for (var i = 0; i < LIMIT; i++) {
-            res[i].age.should.equal(i);
-          }
-          done();
-        }));
+        var cursor = hybrid
+          .collection('dollhouse')
+          .find({ _id: { $gte: 0 } })
+          .sort({ age: 1 })
+          .limit(LIMIT);
+        cursor.toArray(
+          _.after(2, function (err, res) {
+            res.length.should.equal(LIMIT);
+            for (var i = 0; i < LIMIT; i++) {
+              res[i].age.should.equal(i);
+            }
+            done();
+          })
+        );
       });
 
       const remoteCollection = remote.collection('dollhouse');
@@ -42,4 +47,4 @@ describe('Sort / Limit / Skip', function () {
       }
     });
   });
-})
+});

@@ -15,9 +15,7 @@ describe('RestClient', function () {
   });
   it('#request should work', function (done) {
     var restClient = new Client('http://www.example.com/', {}, testOptions);
-    nock('http://www.example.com')
-      .get('/party?q=%7B%22name%22%3A%22Firstname%22%7D')
-      .reply(200, mockResponse);
+    nock('http://www.example.com').get('/party?q=%7B%22name%22%3A%22Firstname%22%7D').reply(200, mockResponse);
 
     restClient.request({ find: { name: 'Firstname' }, collection: 'party' }, function (err, result) {
       should.deepEqual(result, mockResponse);
@@ -34,7 +32,12 @@ describe('RestClient', function () {
         return [201, mockResponse, {}];
       });
     var store = new Store(restClient);
-    store.collection('party').find({ name: 'Firstname' }).skip(50).limit(77).toArray(function () {});
+    store
+      .collection('party')
+      .find({ name: 'Firstname' })
+      .skip(50)
+      .limit(77)
+      .toArray(function () {});
   });
 
   it('#observe should work', function (done) {
@@ -83,13 +86,9 @@ describe('RestClient', function () {
     const restClient = new Client('http://www.example.com', {}, testOptions);
 
     // mock returning response with data - dies after one hit
-    nock('http://www.example.com')
-      .get('/party?q=%7B%22name%22%3A%22a%22%7D')
-      .reply(201, mockResponse);
+    nock('http://www.example.com').get('/party?q=%7B%22name%22%3A%22a%22%7D').reply(201, mockResponse);
     // mock returning empty response
-    nock('http://www.example.com')
-      .get('/party?q=%7B%22name%22%3A%22a%22%7D')
-      .reply(201, {});
+    nock('http://www.example.com').get('/party?q=%7B%22name%22%3A%22a%22%7D').reply(201, {});
 
     let hits = 0;
     const verify = function (res) {
