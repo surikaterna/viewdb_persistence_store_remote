@@ -10,7 +10,7 @@ describe('Cursor', function () {
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(null, [{ _id: 1 }, { _id: 2 }]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, {})
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, {});
     hcursor.toArray(function (err, result) {
       result.length.should.equal(2);
       done();
@@ -23,7 +23,7 @@ describe('Cursor', function () {
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(null, [{ _id: 1 }, { _id: 2 }]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: true })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: true });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       if (++calls === 2) {
@@ -38,7 +38,7 @@ describe('Cursor', function () {
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(null, [{ _id: 1 }, { _id: 2 }]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       done();
@@ -46,12 +46,18 @@ describe('Cursor', function () {
   });
   it('#toArray with versions should merge correctly', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 1, local: true }, { _id: 2, version: 2, local: true }]);
+      callback(null, [
+        { _id: 1, version: 1, local: true },
+        { _id: 2, version: 2, local: true }
+      ]);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 2, local: false }, { _id: 2, version: 1, local: false }]);
+      callback(null, [
+        { _id: 1, version: 2, local: false },
+        { _id: 2, version: 1, local: false }
+      ]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       result[0].local.should.not.be.true;
@@ -62,12 +68,20 @@ describe('Cursor', function () {
 
   it('#toArray with local data first should return correctly', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      setTimeout(function () { callback(null, [{ _id: 1, version: 1, local: true }, { _id: 2, version: 2, local: true }]); }, 10);
+      setTimeout(function () {
+        callback(null, [
+          { _id: 1, version: 1, local: true },
+          { _id: 2, version: 2, local: true }
+        ]);
+      }, 10);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 2, local: false }, { _id: 2, version: 1, local: false }]);
+      callback(null, [
+        { _id: 1, version: 2, local: false },
+        { _id: 2, version: 1, local: false }
+      ]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       result[0].local.should.not.be.true;
@@ -80,9 +94,12 @@ describe('Cursor', function () {
       callback(new Error());
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 2, local: false }, { _id: 2, version: 1, local: false }]);
+      callback(null, [
+        { _id: 1, version: 2, local: false },
+        { _id: 2, version: 1, local: false }
+      ]);
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.exist(err);
@@ -91,12 +108,15 @@ describe('Cursor', function () {
   });
   it('#toArray should throw on remote error', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 2, local: false }, { _id: 2, version: 1, local: false }]);
+      callback(null, [
+        { _id: 1, version: 2, local: false },
+        { _id: 2, version: 1, local: false }
+      ]);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(new Error());
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: true })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: true });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.exist(err);
@@ -105,12 +125,15 @@ describe('Cursor', function () {
   });
   it('#toArray should not throw on remote error if opted out', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      callback(null, [{ _id: 1, version: 2, local: false }, { _id: 2, version: 1, local: false }]);
+      callback(null, [
+        { _id: 1, version: 2, local: false },
+        { _id: 2, version: 1, local: false }
+      ]);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(new Error());
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.not.exist(err);
@@ -122,35 +145,32 @@ describe('Cursor', function () {
     var query = { things: { $elemMatch: { name: { $eq: 'banana' }, category: { $ne: 'toy' } } } };
     var lcursor = new LocalCursor(null, query, null, function (query, callback) {
       setTimeout(function () {
-        callback(
-          null,
-          [
-            {
-              _id: 1,
-              things: [
-                { name: 'banana', category: 'fruit' },
-                { name: 'orange', category: 'toy' }
-              ],
-              version: 1,
-              local: true
-            },
-            {
-              _id: 2,
-              things: [
-                { name: 'banana', category: 'toy' },
-                { name: 'orange', category: 'fruit' }
-              ],
-              version: 2,
-              local: true
-            }
-          ]
-        );
+        callback(null, [
+          {
+            _id: 1,
+            things: [
+              { name: 'banana', category: 'fruit' },
+              { name: 'orange', category: 'toy' }
+            ],
+            version: 1,
+            local: true
+          },
+          {
+            _id: 2,
+            things: [
+              { name: 'banana', category: 'toy' },
+              { name: 'orange', category: 'fruit' }
+            ],
+            version: 2,
+            local: true
+          }
+        ]);
       }, 10);
     });
     var rcursor = new LocalCursor(null, query, null, function (query, callback) {
       callback(new Error());
     });
-    var hcursor = new Cursor(query, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false })
+    var hcursor = new Cursor(query, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.not.exist(err);
@@ -162,12 +182,17 @@ describe('Cursor', function () {
   });
   it('#toArray should not throw on remote error if opted out and delayed local response', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      setTimeout(function () { callback(null, [{ _id: 1, version: 1, local: true }, { _id: 2, version: 2, local: true }]); }, 10);
+      setTimeout(function () {
+        callback(null, [
+          { _id: 1, version: 1, local: true },
+          { _id: 2, version: 2, local: true }
+        ]);
+      }, 10);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(new Error());
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: false });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.not.exist(err);
@@ -177,16 +202,21 @@ describe('Cursor', function () {
   });
   it('#toArray should throw on remote error if not opted out and delayed local response', function (done) {
     var lcursor = new LocalCursor(null, {}, null, function (query, callback) {
-      setTimeout(function () { callback(null, [{ _id: 1, version: 1, local: true }, { _id: 2, version: 2, local: true }]); }, 10);
+      setTimeout(function () {
+        callback(null, [
+          { _id: 1, version: 1, local: true },
+          { _id: 2, version: 2, local: true }
+        ]);
+      }, 10);
     });
     var rcursor = new LocalCursor(null, {}, null, function (query, callback) {
       callback(new Error());
     });
-    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: true })
+    var hcursor = new Cursor({}, lcursor, rcursor, {}, { localFirst: false, throwRemoteErr: true });
     var calls = 0;
     hcursor.toArray(function (err, result) {
       should.exist(err);
       done();
     });
   });
-})
+});

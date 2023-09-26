@@ -13,12 +13,14 @@ describe('Observe-Update', function () {
   beforeEach(function (done) {
     local = new ViewDb();
     var socketIoMock = {
-      emit: function () { },
-      on: function () { }
+      emit: function () {},
+      on: function () {}
     };
     remote = new ViewDbRemoteClient(new SocketClient(socketIoMock));
     hybrid = new ViewDb(new HybridStore(local, remote, { throttleObserveRefresh: 0 }));
-    hybrid.open().then(function () { done() });
+    hybrid.open().then(function () {
+      done();
+    });
   });
 
   it('#observe-update with update query', function (done) {
@@ -61,4 +63,4 @@ describe('Observe-Update', function () {
       }
     });
   });
-})
+});
