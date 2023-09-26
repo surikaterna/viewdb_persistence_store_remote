@@ -34,7 +34,7 @@ describe('RestClient', function () {
         return [201, mockResponse, {}];
       });
     var store = new Store(restClient);
-    store.collection('party').find({ name: 'Firstname' }).skip(50).limit(77).toArray(function () {});
+    store.collection('party').find({ name: 'Firstname' }).skip(50).limit(77).toArray(function () { });
   });
 
   it('#observe should work', function (done) {
@@ -53,7 +53,7 @@ describe('RestClient', function () {
       });
 
     // {observe:this._query, collection:this._collection._name, events:events}
-    handle = restClient.subscribe({ observe: { name: 'a' }, collection: 'shipment', events: {}, skip: 1, limit: 100 }, function () {});
+    handle = restClient.subscribe({ observe: { name: 'a' }, collection: 'shipment', events: {}, skip: 1, limit: 100 }, function () { });
   });
 
   it('#observe should stop when calling stop', function (done) {
@@ -70,7 +70,7 @@ describe('RestClient', function () {
         return [201, mockResponse, {}];
       });
 
-    const observer = restClient.subscribe({ observe: { name: 'a' }, collection: 'parcel', events: {} }, function () {});
+    const observer = restClient.subscribe({ observe: { name: 'a' }, collection: 'parcel', events: {} }, function () { });
     stop = _.after(1, observer.stop);
 
     setTimeout(function () {
