@@ -24,15 +24,19 @@ describe('Observe-Update Remote', function () {
     done();
   });
   it('#viewdb server+hybrid setup should work', function (done) {
-    var id = 1, called = 0;
+    var id = 1,
+      called = 0;
     serverViewdb.collection('dollhouse').insert({ _id: id });
-    hybrid.collection('dollhouse').find({ _id: id }).toArray(function (err, res) {
-      if (called === 0) {
-        called++;
-      } else {
-        done();
-      }
-    });
+    hybrid
+      .collection('dollhouse')
+      .find({ _id: id })
+      .toArray(function (err, res) {
+        if (called === 0) {
+          called++;
+        } else {
+          done();
+        }
+      });
   });
   it('#old docs should be removed on updateQuery', function (done) {
     var id = 1;
@@ -100,4 +104,4 @@ describe('Observe-Update Remote', function () {
       }
     });
   });
-})
+});
