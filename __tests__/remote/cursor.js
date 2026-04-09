@@ -39,6 +39,17 @@ describe('Remote server/client', function () {
         done();
       });
   });
+  it('#remote cursor sort should not trigger refresh when not observing', function () {
+    var collection = clientVdb.collection('dollhouse');
+    var changes = 0;
+    collection.on('change', function () {
+      changes++;
+    });
+
+    collection.find({ _id: 'echo' }).sort({ _id: 1 });
+
+    changes.should.equal(0);
+  });
   it('#remote cursor count', function (done) {
     remote.collection('dollhouse').insert({ _id: 'echo' });
     remote.collection('dollhouse').insert({ _id: 'echo2' });
